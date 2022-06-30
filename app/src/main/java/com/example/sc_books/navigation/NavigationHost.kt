@@ -13,7 +13,6 @@ fun NavigationHost(
     navController: NavHostController,
     /*darkMode: MutableState<Boolean>*/
 ) {
-
     NavHost(navController = navController, startDestination = Sugerencias.route) {
         composable(Sugerencias.route) {
             Sugerencias()

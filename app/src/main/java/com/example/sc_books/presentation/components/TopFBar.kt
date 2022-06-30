@@ -5,6 +5,8 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -25,6 +27,10 @@ fun TopFBar(){
             IconButton(onClick = { /*TODO*/ }
             ){
                 Icon(Icons.Default.Person, "Perfil")
+            }
+            IconButton(onClick = { /*TODO*/ }
+            ){
+                Icon(Icons.Default.Logout, "Salir")
             }
         },
         backgroundColor = CustomViolet,

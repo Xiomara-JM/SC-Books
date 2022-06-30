@@ -23,9 +23,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview
 @Composable
 fun MainScreen() {
+    BottomNavigation()
+}
+
+@Preview
+@Composable
+fun BottomNavigation() {
     val navController= rememberNavController()
     val navigationItem = listOf(
         Sugerencias,
