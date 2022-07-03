@@ -23,11 +23,10 @@ fun NavigationHost(
         }
 
         composable(NuevoPost.route) {
-            NuevoPost(
-                navSug = { /*newText ->*/
-                    navController.navigate(MyPosts.route)
-                }
-            )
+            NuevoPost(navController
+            ) { /*newText ->*/
+                navController.navigate(MyPosts.route)
+            }
         }
 
         composable(MyPosts.route) {
