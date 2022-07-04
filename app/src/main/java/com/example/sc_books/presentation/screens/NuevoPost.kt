@@ -100,7 +100,7 @@ fun PopupWindowDialog(navController: NavHostController) {
                                         openDialog.value = !openDialog.value
                                         openNuevaResena.value = !openNuevaResena.value
                                     },
-                                fontSize = 16.sp
+                                fontSize = 16.sp,
                             )
                             Divider(modifier = Modifier.border(1.dp, LB50_900))
                             Text(

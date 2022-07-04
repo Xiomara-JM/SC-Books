@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -16,9 +17,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.sc_books.ui.theme.LB50_900
 import com.example.sc_books.ui.theme.Purple700
 import com.example.sc_books.ui.theme.SCBooksTheme
 
@@ -62,6 +65,17 @@ fun LoginScreen(){
             ) {
                 Text(text = "INICIAR")
             }
+            Text(
+                text = "... o puede ingresar sin usuario.",
+                modifier = Modifier
+                    .padding(vertical = 5.dp)
+                    .clickable {
+                        mContext.startActivity(Intent(mContext, MainActivity::class.java))
+                    },
+                fontSize = 12.sp,
+                color = LB50_900,
+                textDecoration = TextDecoration.Underline
+            )
         }
     }
 }
