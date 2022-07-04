@@ -176,7 +176,8 @@ fun citaGaleria() {
 
 @Composable
 fun citaCamara() {
-    Column(
+    TextRead()
+    /*Column(
         modifier = Modifier.padding(horizontal = 10.dp)
     ) {
         Text(
@@ -185,5 +186,5 @@ fun citaCamara() {
                 .padding(vertical = 5.dp),
             fontSize = 16.sp
         )
-    }
+    }*/
 }
