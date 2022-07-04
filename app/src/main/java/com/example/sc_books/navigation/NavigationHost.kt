@@ -15,7 +15,7 @@ fun NavigationHost(
 ) {
     NavHost(navController = navController, startDestination = Sugerencias.route) {
         composable(Sugerencias.route) {
-            Sugerencias()
+            Sugerencias(navController)
         }
 
         composable(Buscador.route) {
