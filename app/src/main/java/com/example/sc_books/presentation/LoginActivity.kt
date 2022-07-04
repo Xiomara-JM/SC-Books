@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.sc_books.ui.theme.Purple700
 import com.example.sc_books.ui.theme.SCBooksTheme
 
 class LoginActivity : ComponentActivity() {
@@ -48,6 +50,9 @@ fun LoginScreen(){
                 )
             )
             Button(
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = Purple700,
+                    contentColor = Color.White),
                 onClick = {
                     mContext.startActivity(Intent(mContext, MainActivity::class.java))
                 },
