@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "10889271188",
+    "project_id": "sc-books-2022",
+    "storage_bucket": "sc-books-2022.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:10889271188:android:96e8f02708ac4308966181",
+        "android_client_info": {
+          "package_name": "com.example.sc_books"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "10889271188-edts5k22sddt66kqkrp5iuvhve1jvqtn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAty53zZ5madNhApzxq3_K3gsOyCzLtsEc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "10889271188-edts5k22sddt66kqkrp5iuvhve1jvqtn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
