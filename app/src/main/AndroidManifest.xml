@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.sc_books" >
 
+    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     
     <application
         android:allowBackup="true"
@@ -15,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SCBooks"
         tools:targetApi="31" >
-        <activity
+        <!-- <activity
             android:name=".presentation.LoginActivity"
             android:exported="true"
             android:label="@string/title_activity_login"
@@ -25,7 +27,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity> -->
         <activity
             android:name=".presentation.MainActivity"
             android:exported="true"

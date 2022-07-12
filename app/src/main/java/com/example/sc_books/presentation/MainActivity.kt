@@ -6,9 +6,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.navigation.compose.rememberNavController
@@ -17,9 +14,14 @@ import com.example.sc_books.navigation.NavigationHost
 import com.example.sc_books.presentation.components.BottomNavigationBar
 import com.example.sc_books.presentation.components.TopFBar
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.util.Log
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import com.example.sc_books.datastore.Preferencias
 
-private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST = 34
+/*private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST = 34
 private fun foregroundPermissionApproved(context: Context): Boolean {
     return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
         context, Manifest.permission.CAMERA
@@ -40,13 +42,13 @@ private fun requestForegroundPermission(context: Context){
             arrayOf(Manifest.permission.CAMERA), REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST
         )
     }
-}
+}*/
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            requestForegroundPermission(this@MainActivity)
+            //requestForegroundPermission(this@MainActivity)
             MainScreen()
         }
     }
@@ -54,12 +56,27 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen() {
-    BottomNavigation()
+    val context = LocalContext.current
+    val dataStore = Preferencias(context)
+    val skipLogin = dataStore.getSkipSesion.collectAsState(initial = false).value
+    val estadoSesion = dataStore.getEstadoSesion.collectAsState(initial = false).value
+    val openLogin = remember { mutableStateOf(true) }
+    if (openLogin.value){
+        if (skipLogin || estadoSesion){
+            openLogin.value = !openLogin.value
+        }
+        else {
+            LoginScreen()
+        }
+    }
+    if (!openLogin.value) {
+        BottomNavigation(openLogin)
+    }
 }
 
-@Preview
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun BottomNavigation() {
+fun BottomNavigation(openLogin: MutableState<Boolean>) {
     val navController= rememberNavController()
     val navigationItem = listOf(
         Sugerencias,
@@ -70,7 +87,7 @@ fun BottomNavigation() {
     )
 
     Scaffold(
-        topBar = { TopFBar()},
+        topBar = { TopFBar(openLogin)},
         bottomBar = {
             BottomNavigationBar(
                 navController = navController,

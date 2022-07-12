@@ -33,7 +33,7 @@ import com.google.mlkit.vision.text.TextRecognizer
 import java.util.concurrent.Executors
 
 
-@Composable
+/*@Composable
 fun TextRead(){
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -102,7 +102,7 @@ fun TextRecognitionView(
             }
         )
 
-        Row(
+        /*Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
@@ -117,9 +117,9 @@ fun TextRecognitionView(
                     contentDescription = "back",
                     tint = Color.White
                 ) }
-        }
+        }*/
     }
-}
+}*/
 
 class ObjectDetectorImageAnalyzer(
     private val textRecognizer: TextRecognizer,
