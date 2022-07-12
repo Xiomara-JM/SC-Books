@@ -14,13 +14,14 @@ import com.example.sc_books.navigation.NavigationHost
 import com.example.sc_books.presentation.components.BottomNavigationBar
 import com.example.sc_books.presentation.components.TopFBar
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import com.example.sc_books.datastore.Preferencias
 
-private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST = 34
+/*private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST = 34
 private fun foregroundPermissionApproved(context: Context): Boolean {
     return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
         context, Manifest.permission.CAMERA
@@ -41,13 +42,13 @@ private fun requestForegroundPermission(context: Context){
             arrayOf(Manifest.permission.CAMERA), REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST
         )
     }
-}
+}*/
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            requestForegroundPermission(this@MainActivity)
+            //requestForegroundPermission(this@MainActivity)
             MainScreen()
         }
     }
@@ -73,6 +74,7 @@ fun MainScreen() {
     }
 }
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun BottomNavigation(openLogin: MutableState<Boolean>) {
     val navController= rememberNavController()
