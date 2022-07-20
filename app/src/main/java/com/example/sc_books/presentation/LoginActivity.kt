@@ -39,6 +39,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.pager.pagerTabIndicatorOffset
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 /*class LoginActivity : ComponentActivity() {
@@ -50,12 +51,11 @@ import kotlinx.coroutines.launch
     }
 }*/
 
+
 @OptIn(ExperimentalPagerApi::class)
 @Preview
 @Composable
 fun LoginScreen(){
-
-
     val tabItems = listOf("Iniciar Sesión", "Crear una cuenta")
     val pagerState = rememberPagerState()
     val coroutineScope = rememberCoroutineScope()
