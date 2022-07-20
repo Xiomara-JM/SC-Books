@@ -53,7 +53,7 @@ fun Sugerencias(navController: NavHostController){
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colors.background)
-            .padding(top = 48.dp, start = 24.dp, end = 24.dp),
+            .padding(start = 24.dp, end = 24.dp, bottom = 60.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(

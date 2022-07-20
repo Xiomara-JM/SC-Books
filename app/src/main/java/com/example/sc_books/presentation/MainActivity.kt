@@ -18,8 +18,10 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.util.Log
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
 import com.example.sc_books.datastore.Preferencias
+import dagger.hilt.android.AndroidEntryPoint
 
 /*private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST = 34
 private fun foregroundPermissionApproved(context: Context): Boolean {
@@ -44,6 +46,7 @@ private fun requestForegroundPermission(context: Context){
     }
 }*/
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +77,8 @@ fun MainScreen() {
     }
 }
 
+
+@OptIn(ExperimentalComposeUiApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun BottomNavigation(openLogin: MutableState<Boolean>) {
