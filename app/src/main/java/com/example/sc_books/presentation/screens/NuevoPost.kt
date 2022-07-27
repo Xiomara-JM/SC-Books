@@ -70,7 +70,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
+//import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sc_books.viewmodels.BookViewModel
 
 import java.io.IOException
@@ -202,7 +202,7 @@ fun PopupWindowDialog(navController: NavHostController) {
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun nuevaResena(
-    viewModel: BookViewModel = hiltViewModel(),
+
 ) {
 
     /*val dropDownOptions = mutableStateOf(listOf<String>())
