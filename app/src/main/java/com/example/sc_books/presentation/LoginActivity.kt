@@ -1,6 +1,9 @@
 package com.example.sc_books.presentation
 
+import android.content.Context
 import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.Animatable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -13,8 +16,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.materialIcon
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,8 +27,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextDecoration
@@ -39,7 +40,9 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.google.accompanist.pager.pagerTabIndicatorOffset
-import dagger.hilt.android.AndroidEntryPoint
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 
 /*class LoginActivity : ComponentActivity() {
@@ -209,36 +212,52 @@ fun LoginScreen(){
 @Composable
 fun SignUpForm() {
     val checked = remember { mutableStateOf(true) }
+    var nombres by rememberSaveable{mutableStateOf<String?>(null)}
+    var apellidos by rememberSaveable{mutableStateOf<String?>(null)}
+    var email by rememberSaveable{mutableStateOf<String?>(null)}
+    var username by rememberSaveable{mutableStateOf<String?>(null)}
+    var password by rememberSaveable{mutableStateOf<String?>(null)}
+
+    val auth = Firebase.auth
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
 
     TextFieldWithIcons(
         name = "Nombres",
         placeholder = "Ingrese sus nombres",
         icon = Icons.Default.Create,
-        keyboardType = KeyboardType.Text
+        keyboardType = KeyboardType.Text,
+        getText = {nombres = it}
     )
     Spacer(modifier = Modifier.height(8.dp))
     TextFieldWithIcons(
         name = "Apellidos",
         placeholder = "Ingrese sus apellidos",
         icon = Icons.Default.Create,
-        keyboardType = KeyboardType.Text
+        keyboardType = KeyboardType.Text,
+        getText = {apellidos = it}
     )
     Spacer(modifier = Modifier.height(8.dp))
     TextFieldWithIcons(
         name = "Nombre de usuario",
         placeholder = "Ingrese un nombre de usuario",
         icon = Icons.Default.AccountBox,
-        keyboardType = KeyboardType.Text
+        keyboardType = KeyboardType.Text,
+        getText = {username = it}
     )
     Spacer(modifier = Modifier.height(8.dp))
     TextFieldWithIcons(
         name = "Correo Electrónico",
         placeholder = "Ingrese su Correo Electrónico",
         icon = Icons.Default.Email,
-        keyboardType = KeyboardType.Email
+        keyboardType = KeyboardType.Email,
+        getText = {email = it}
     )
     Spacer(modifier = Modifier.height(8.dp))
-    PasswordTextField()
+    PasswordTextField(getPassword = {password = it})
     LabelledCheckbox(
         checked = checked.value,
         onCheckedChange = { checked.value = it },
@@ -246,7 +265,49 @@ fun SignUpForm() {
     )
     Spacer(modifier = Modifier.height(8.dp))
     Button(onClick = {
-        //your onclick code here
+        if (nombres.isNullOrEmpty() || apellidos.isNullOrEmpty() ||
+            username.isNullOrEmpty() || email.isNullOrEmpty() ||
+            password.isNullOrEmpty() ) {
+            showAlert(context, 1)
+        }
+        else{
+            dbf.collection("usuarios").document(username?:"").get()
+                .addOnCompleteListener{
+                    if (it.isSuccessful){
+                        if (!it.getResult().exists()){
+                            auth.createUserWithEmailAndPassword(email?:"", password?:"")
+                                .addOnCompleteListener{
+                                    if (it.isSuccessful) {
+                                        scope.launch {
+                                            dataStore.saveEstadoSesion(true)
+                                            dataStore.saveNombre(username?:"")
+                                            dataStore.saveEmail(email?:"")
+                                        }
+                                        dbf.collection("usuarios").document(username?:"").set(
+                                            hashMapOf(
+                                                "nombre" to nombres,
+                                                "apellidos" to apellidos,
+                                                "email" to email
+                                            )
+                                        )
+                                        showAlert(context, 4)
+                                        context.startActivity(Intent(context, MainActivity::class.java))
+                                    } else {
+                                        showAlert(context, 2)
+                                    }
+                                }
+                        }
+                        else{
+                            showAlert(context, 3)
+                        }
+                    }
+                    else{
+                        showAlert(context, 2)
+                    }
+                }
+
+
+        }
     },
         elevation =  ButtonDefaults.elevation(
             defaultElevation = 10.dp,
@@ -261,12 +322,32 @@ fun SignUpForm() {
             contentDescription = "Inicio de sesión",
             modifier = Modifier.size(20.dp)
         )
-        Text(text = "Iniciar Sesión", Modifier.padding(start = 10.dp))
+        Text(text = "Registrarse", Modifier.padding(start = 10.dp))
+    }
+}
+
+fun showAlert(context: Context, i: Int) {
+    if (i == 1){
+        Toast.makeText(context, "Debe llenar todos los campos.", Toast.LENGTH_SHORT).show()
+    }
+    if (i == 2){
+        Toast.makeText(context, "Se ha producido un error en el registro. Intente de nuevo.", Toast.LENGTH_SHORT).show()
+    }
+    if (i == 3){
+        Toast.makeText(context, "Nombre de usuario no disponible.", Toast.LENGTH_SHORT).show()
+    }
+    if (i == 4){
+        Toast.makeText(context, "Registro exitoso. Se inició la sesión.", Toast.LENGTH_SHORT).show()
     }
 }
 
 @Composable
 fun LoginForm() {
+    //Form
+    var email by rememberSaveable{mutableStateOf<String?>(null)}
+    var password by rememberSaveable{mutableStateOf<String?>(null)}
+
+    val auth = Firebase.auth
     //DataStore
     val mContext = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -276,10 +357,11 @@ fun LoginForm() {
         name = "Correo Electrónico",
         placeholder = "Ingrese su Correo Electrónico",
         icon = Icons.Default.Email,
-        keyboardType = KeyboardType.Email
+        keyboardType = KeyboardType.Email,
+        getText = {email = it}
     )
     Spacer(modifier = Modifier.height(8.dp))
-    PasswordTextField()
+    PasswordTextField(getPassword = {password = it})
     Spacer(modifier = Modifier.height(8.dp))
     Button(onClick = {
         scope.launch {
@@ -342,7 +424,8 @@ fun TextFieldWithIcons(
     name: String,
     placeholder: String,
     icon: ImageVector,
-    keyboardType: KeyboardType
+    keyboardType: KeyboardType,
+    getText:(String?) -> Unit
 ) {
     var text by remember { mutableStateOf(TextFieldValue(""))}
     OutlinedTextField(
@@ -356,13 +439,15 @@ fun TextFieldWithIcons(
         label = { Text(text = name) },
         placeholder = { Text(text = placeholder) }
     )
+    getText(text.text)
 }
 
 @Composable
-fun PasswordTextField() {
+fun PasswordTextField(getPassword: (String?) -> Unit) {
     val focusManager = LocalFocusManager.current
     var text by remember { mutableStateOf(TextFieldValue("")) }
     val showPassword = remember { mutableStateOf(false) }
+    getPassword(text.text)
     OutlinedTextField(
         value = text, 
         onValueChange = {

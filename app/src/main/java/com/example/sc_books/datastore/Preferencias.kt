@@ -24,6 +24,11 @@ class Preferencias(
             preferences[NOMBRE] = noteNombre
         }
     }
+    suspend fun saveEmail(noteEmail: String){
+        context.dataStore.edit { preferences ->
+            preferences[EMAIL] = noteEmail
+        }
+    }
 
     suspend fun saveSkipSesion(noteSkip: Boolean){
         context.dataStore.edit { preferences ->
@@ -45,11 +50,16 @@ class Preferencias(
         .map { preferences ->
             preferences[NOMBRE] ?: ""
         }
+    val getEmail: Flow<String> = context.dataStore.data
+        .map { preferences ->
+            preferences[EMAIL] ?: ""
+        }
 
     companion object {
         private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("userPreferences")
         private val ESTADO_SESION = booleanPreferencesKey("key_app_estado_sesion")
         private val SKIP_SESION = booleanPreferencesKey("key_app_skip_sesion")
         private val NOMBRE = stringPreferencesKey("key_app_nombre")
+        private val EMAIL = stringPreferencesKey("key_app_email")
     }
 }
