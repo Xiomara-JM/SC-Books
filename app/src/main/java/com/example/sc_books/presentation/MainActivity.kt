@@ -16,10 +16,15 @@ import com.example.sc_books.presentation.components.TopFBar
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import com.example.sc_books.datastore.Preferencias
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -56,6 +61,39 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+/*
+@RequiresApi(Build.VERSION_CODES.M)
+@Composable
+fun NavigationGraph(navController: NavHostController, activity: MainActivity) {
+    NavHost(navController, startDestination = BottomNavItem.Home.screen_route) {
+        composable(BottomNavItem.Home.screen_route) {
+            HomeScreen(navController)
+        }
+        composable("join") {
+            JoinScreen(navController)
+        }
+        composable("add_purse") {
+            AddPurseScreen(navController)
+        }
+        composable("list_deposits/{purseJson}") {
+            Deposits(navController, it.arguments?.getString("purseJson"))
+        }
+        composable("deposit/{purseJson}") {
+            DepositScreen(navController, it.arguments?.getString("purseJson"))
+        }
+        composable("profile") {
+            ProfileScreen(navController = navController)
+        }
+        composable("customize") {
+            CustomizeScreen(navController = navController, activity.fontFamily, activity.theme, activity.language) {
+                    fontFamily: String, theme: String, language: String ->
+                activity.updateCustomizeItems(fontFamily, theme, language)
+            }
+        }
+    }
+}
+
+ */
 
 @Composable
 fun MainScreen() {
@@ -92,7 +130,7 @@ fun BottomNavigation(openLogin: MutableState<Boolean>) {
     )
 
     Scaffold(
-        topBar = { TopFBar(openLogin)},
+        topBar = { TopFBar(openLogin,navController)},
         bottomBar = {
             BottomNavigationBar(
                 navController = navController,

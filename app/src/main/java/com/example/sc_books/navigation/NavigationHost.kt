@@ -1,5 +1,7 @@
 package com.example.sc_books.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,6 +18,7 @@ import com.example.sc_books.ui.theme.SCBooksTheme
 import com.example.sc_books.viewmodels.BookViewModel
 import com.example.sc_books.viewmodels.SearchViewModel
 
+@RequiresApi(Build.VERSION_CODES.M)
 @ExperimentalComposeUiApi
 @Composable
 fun NavigationHost(
@@ -48,6 +51,14 @@ fun NavigationHost(
         }
         composable(Favoritos.route) {
             Favoritos()
+        }
+
+        composable("comentarios_posts") {
+            ComentariosPosts(navController)
+        }
+
+        composable("perfil_usuario") {
+            PerfilUsuario(navController)
         }
 
     }
