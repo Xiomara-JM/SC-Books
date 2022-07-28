@@ -23,46 +23,53 @@ import com.example.sc_books.navigation.Destinations
 import com.example.sc_books.presentation.LoginScreen
 import com.example.sc_books.ui.theme.CustomViolet
 import com.example.sc_books.ui.theme.Purple500
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 
 @Composable
 fun TopFBar(
     openLogin: MutableState<Boolean>
-){
+) {
     val mContext = LocalContext.current
     val scope = rememberCoroutineScope()
     val dataStore = Preferencias(mContext)
     val estadoSesion = dataStore.getEstadoSesion.collectAsState(initial = false).value
     val skipSesion = dataStore.getSkipSesion.collectAsState(initial = false).value
     TopAppBar(
-        title = { Text(
-            text = "S&C Books",
-            fontSize = 20.sp,
+        title = {
+            Text(
+                text = "S&C Books",
+                fontSize = 20.sp,
 
-        ) },
+                )
+        },
         actions = {
             IconButton(onClick = {
-                if (skipSesion){
+                if (skipSesion) {
                     scope.launch {
                         dataStore.saveSkipSesion(false)
                         openLogin.value = !openLogin.value
                     }
                 }
             }
-            ){
+            ) {
                 Icon(Icons.Default.Person, "Perfil")
             }
-            IconButton(onClick = {
-                if (estadoSesion){
+            if (estadoSesion) {
+                IconButton(onClick = {
                     scope.launch {
                         dataStore.saveEstadoSesion(false)
+                        dataStore.saveEmail("")
+                        dataStore.saveNombre("")
+                        dataStore.saveTag("")
                         openLogin.value = !openLogin.value
                     }
+                    FirebaseAuth.getInstance().signOut()
                 }
-            }
-            ){
-                Icon(Icons.Default.Logout, "Salir")
+                ) {
+                    Icon(Icons.Default.Logout, "Salir")
+                }
             }
         },
         backgroundColor = CustomViolet,

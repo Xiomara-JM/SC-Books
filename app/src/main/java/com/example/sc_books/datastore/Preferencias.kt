@@ -2,10 +2,7 @@ package com.example.sc_books.datastore
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -27,6 +24,12 @@ class Preferencias(
     suspend fun saveEmail(noteEmail: String){
         context.dataStore.edit { preferences ->
             preferences[EMAIL] = noteEmail
+        }
+    }
+
+    suspend fun saveTag(noteTag: String){
+        context.dataStore.edit { preferences ->
+            preferences[TAG] = noteTag
         }
     }
 
@@ -54,6 +57,10 @@ class Preferencias(
         .map { preferences ->
             preferences[EMAIL] ?: ""
         }
+    val getTag: Flow<String> = context.dataStore.data
+        .map { preferences ->
+            preferences[TAG] ?: ""
+        }
 
     companion object {
         private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("userPreferences")
@@ -61,5 +68,6 @@ class Preferencias(
         private val SKIP_SESION = booleanPreferencesKey("key_app_skip_sesion")
         private val NOMBRE = stringPreferencesKey("key_app_nombre")
         private val EMAIL = stringPreferencesKey("key_app_email")
+        private val TAG = stringPreferencesKey("key_app_tag")
     }
 }
