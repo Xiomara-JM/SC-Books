@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.example.sc_books.datastore.Preferencias
@@ -29,8 +30,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TopFBar(
-    openLogin: MutableState<Boolean>
-) {
+    openLogin: MutableState<Boolean>, navController:NavHostController){
     val mContext = LocalContext.current
     val scope = rememberCoroutineScope()
     val dataStore = Preferencias(mContext)
@@ -46,11 +46,14 @@ fun TopFBar(
         },
         actions = {
             IconButton(onClick = {
-                if (skipSesion) {
-                    scope.launch {
-                        dataStore.saveSkipSesion(false)
-                        openLogin.value = !openLogin.value
+                navController.navigate("perfil_usuario") {
+                    navController.graph.startDestinationRoute?.let { screen_route ->
+                        popUpTo(screen_route) {
+                            saveState = true
+                        }
                     }
+                    launchSingleTop = true
+                    restoreState = true
                 }
             }
             ) {
