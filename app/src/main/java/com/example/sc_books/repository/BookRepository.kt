@@ -2,6 +2,7 @@ package com.example.sc_books.repository
 
 import com.example.sc_books.datasource.RestDataSource
 import com.example.sc_books.model.BookList
+import com.example.sc_books.model.Item
 import com.google.android.datatransport.runtime.dagger.Binds
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
@@ -9,6 +10,7 @@ import javax.inject.Inject
 
 interface BookRepository {
     suspend fun getBooks(query: String): RetroState<BookList>
+    suspend fun getBooksFromId(id: String): RetroState<Item>
 }
 
 class BookRepositoryImp @Inject constructor(
@@ -19,6 +21,15 @@ class BookRepositoryImp @Inject constructor(
     override suspend fun getBooks(query: String): RetroState<BookList> {
         return try {
             RetroState.Success(data = dataSource.getBooks(query = query))
+        } catch (e: Exception) {
+            RetroState.Failure(message = e.message)
+        }
+    }
+
+    @Binds
+    override suspend fun getBooksFromId(id: String): RetroState<Item> {
+        return try {
+            RetroState.Success(data = dataSource.getBookFromId(id = id))
         } catch (e: Exception) {
             RetroState.Failure(message = e.message)
         }

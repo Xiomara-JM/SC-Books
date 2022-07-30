@@ -48,7 +48,6 @@ import com.google.accompanist.pager.rememberPagerState
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
-
 @Composable
 fun ComentariosPosts(navController: NavHostController) {
 
