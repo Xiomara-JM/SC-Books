@@ -68,8 +68,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import com.example.sc_books.datastore.Preferencias
 import com.example.sc_books.presentation.LoginForm
 import com.example.sc_books.presentation.SignUpForm
+import com.example.sc_books.presentation.showAlert
 import com.example.sc_books.ui.theme.*
 //import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sc_books.viewmodels.BookViewModel
@@ -77,6 +79,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 import java.io.IOException
@@ -307,6 +310,15 @@ fun nuevaResena(
 
 ) {
 
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val email = dataStore.getEmail.collectAsState(initial = "").value
+    val username = dataStore.getNombre.collectAsState(initial = "").value
+    val tag = dataStore.getTag.collectAsState(initial = "").value
+
     /*val dropDownOptions = mutableStateOf(listOf<String>())
     val textFieldValue = mutableStateOf(TextFieldValue())
     val dropDownExpanded = mutableStateOf(false)
@@ -417,7 +429,35 @@ fun nuevaResena(
         Spacer(modifier = Modifier.height(15.dp))
         Button(
             onClick = {
-                //mContext.startActivity(Intent(mContext, MainActivity::class.java))
+                if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty()) {
+                    showAlert(context, 1)
+                }
+                else {
+                    dbf.collection("libros").document(query).get()
+                        .addOnCompleteListener{
+                            if (it.isSuccessful){
+                                if (!it.getResult().exists()){
+                                    dbf.collection("libros").document(query).set(
+                                        hashMapOf(
+                                            "nombre" to query,
+                                            "info" to "información del libro"
+                                        )
+                                    )
+                                }
+                                dbf.collection("resenias").document().set(
+                                    hashMapOf(
+                                        "libro" to query,
+                                        "resenia" to inputTextCita.value.text,
+                                        "autor_email" to email,
+                                        "autor_username" to username,
+                                        "autor_tag" to tag
+                                    )
+                                )
+                            }
+                        }
+                }
+
+                Log.d("Verificar", "$query y $onValueChange y ${inputTextCita.value.text}")
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = Purple700,
@@ -435,6 +475,15 @@ fun nuevaResena(
 
 @Composable
 fun nuevaCita() {
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val email = dataStore.getEmail.collectAsState(initial = "").value
+    val username = dataStore.getNombre.collectAsState(initial = "").value
+    val tag = dataStore.getTag.collectAsState(initial = "").value
+
     var imagenBitmap by rememberSaveable{ mutableStateOf<Bitmap?>(null)}
     var imagenUri by rememberSaveable{ mutableStateOf<Uri?>(null)}
     var escaneo by rememberSaveable{mutableStateOf("")}
@@ -533,7 +582,7 @@ fun nuevaCita() {
             )
             Button(
                 onClick = {
-                    //mContext.startActivity(Intent(mContext, MainActivity::class.java))
+                    Toast.makeText(context, "$email y $username y $tag", Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier
                     .width(220.dp)
