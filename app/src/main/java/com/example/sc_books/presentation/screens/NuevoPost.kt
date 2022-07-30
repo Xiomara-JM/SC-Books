@@ -386,6 +386,7 @@ fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel) {
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
+@SuppressLint("UnrememberedMutableState")
 @Preview
 @Composable
 fun nuevaResena(
@@ -453,7 +454,7 @@ fun nuevaResena(
                     )
                 }
             }
-            /*viewModel.resetAll()*/
+            viewModel.resetAll()
         }
 
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -484,7 +485,7 @@ fun nuevaResena(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done
                 ),
-                keyboardActions = KeyboardActions(onSearch = {
+                keyboardActions = KeyboardActions(onDone = {
                     keyboardController?.hide()
                 }),
                 singleLine = true,
@@ -541,6 +542,9 @@ fun nuevaResena(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Done
             ),
+            keyboardActions = KeyboardActions(onDone = {
+                keyboardController?.hide()
+            }),
             singleLine = true,
             /*keyboardActions = KeyboardActions(onSearch = {
                 searchBook()
