@@ -35,11 +35,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.sc_books.R
 import com.example.sc_books.firebase.models.Review
 import com.example.sc_books.ui.theme.*
+import com.example.sc_books.viewmodels.BookViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
@@ -166,7 +168,7 @@ fun LibroResCita(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ){
-                    PerfilLibro(navController)
+                    PerfilLibro(navController=navController, bookId="z2hczgEACAAJ")
                 }
 
             }
@@ -201,13 +203,24 @@ fun LibroResCita(navController: NavHostController) {
 
 }
 
-
 @Composable
-fun PerfilLibro(navController: NavHostController) {
-    Column() {
-        Text(text = "TITULO DEL LIBRO ")
+fun PerfilLibro(
+    viewModel: BookViewModel = hiltViewModel(),
+    navController: NavHostController,
+    bookId: String,
+) {
+    if(bookId == ""){
+        Column(verticalArrangement = Arrangement.Center){
+            Image(
+                painter = rememberAsyncImagePainter("https://cdn-icons.flaticon.com/png/512/2702/premium/2702154.png?token=exp=1659184858~hmac=86944f7cb3268b42e3a63213ee139b43"),
+                contentDescription = "",
+                modifier = Modifier.size(110.dp)
+            )
+        }
+    }else{
+        viewModel.getBook(bookId)
+        VistaLibroDetalle(viewModel = viewModel, navHostController = navController)
     }
-
 }
 @Composable
 fun Resenas(navController: NavHostController ) {

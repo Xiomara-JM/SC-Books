@@ -208,7 +208,7 @@ fun PopupWindowDialog(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    nuevaResena()
+                    nuevaResena(navController=navController)
                 }
 
             } else {
@@ -219,7 +219,7 @@ fun PopupWindowDialog(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    nuevaCita(hiltViewModel())
+                    nuevaCita(hiltViewModel(), navController)
                 }
             }
 
@@ -315,7 +315,10 @@ fun PopupWindowDialog(navController: NavHostController) {
 }
 
 @Composable
-fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel) {
+fun MyDialog(
+    onClose: () -> Unit, viewModel: BookViewModel,
+    navController: NavHostController
+) {
     var readOnly by remember { mutableStateOf(false) }
 
     Dialog(
@@ -359,7 +362,7 @@ fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel) {
                     )
                 }
                 Box(modifier = Modifier.padding(15.dp, 35.dp, 15.dp, 60.dp)) {
-                    DisplayResults(viewModel, readOnly)
+                    DisplayResults(viewModel, readOnly, navController)
                 }
             }
             Box(
@@ -386,10 +389,11 @@ fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel) {
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
-@Preview
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun nuevaResena(
-    viewModel: BookViewModel = hiltViewModel()
+    viewModel: BookViewModel = hiltViewModel(),
+    navController: NavHostController
 ) {
     //DataStore
     val context = LocalContext.current
@@ -435,7 +439,7 @@ fun nuevaResena(
             } else {
                 Log.d("rawrwa", query)
                 viewModel.getBooks(query)
-                MyDialog(onClose = { showDialog = false }, viewModel)
+                MyDialog(onClose = { showDialog = false }, viewModel, navController)
             }
         }
 
@@ -453,7 +457,7 @@ fun nuevaResena(
                     )
                 }
             }
-            /*viewModel.resetAll()*/
+            viewModel.resetAll()
         }
 
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -484,7 +488,7 @@ fun nuevaResena(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done
                 ),
-                keyboardActions = KeyboardActions(onSearch = {
+                keyboardActions = KeyboardActions(onDone = {
                     keyboardController?.hide()
                 }),
                 singleLine = true,
@@ -541,6 +545,9 @@ fun nuevaResena(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Done
             ),
+            keyboardActions = KeyboardActions(onDone = {
+                keyboardController?.hide()
+            }),
             singleLine = true,
             /*keyboardActions = KeyboardActions(onSearch = {
                 searchBook()
@@ -624,7 +631,8 @@ fun nuevaResena(
 
 @Composable
 fun nuevaCita(
-    viewModel: BookViewModel
+    viewModel: BookViewModel,
+    navController: NavHostController
 ) {
     //DataStore
     val context = LocalContext.current
@@ -682,7 +690,7 @@ fun nuevaCita(
                 if (query == "") {
                 } else {
                     viewModel.getBooks(query)
-                    MyDialog(onClose = { showDialog = false }, viewModel)
+                    MyDialog(onClose = { showDialog = false }, viewModel, navController)
                 }
             }
 

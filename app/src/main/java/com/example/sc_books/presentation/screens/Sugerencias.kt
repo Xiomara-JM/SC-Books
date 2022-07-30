@@ -497,7 +497,6 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                 Card(
                     elevation = 0.dp,
                     onClick = {
-
                         navController.navigate("comentarios_posts") {
                             navController.graph.startDestinationRoute?.let { screen_route ->
                                 popUpTo(screen_route) {
@@ -515,7 +514,6 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                     Row {
                         Icon(
                             painterResource(id = R.drawable.ic_baseline_comment_24),
-
                             contentDescription = "",
                             modifier = Modifier.width(28.dp),
                             tint = Color.Black
@@ -545,7 +543,6 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                 Card(
                     elevation = 0.dp,
                     onClick = {
-
                         navController.navigate("libro_resena_cita") {
                             navController.graph.startDestinationRoute?.let { screen_route ->
                                 popUpTo(screen_route) {
@@ -595,7 +592,6 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
         }
 
     }
-
 
 }
 /*
