@@ -250,62 +250,12 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                                     )
                                     .padding(all = 4.dp)
                             ) {
-                                /*
-                                Icon(
-                                    painterResource(id = R.drawable.ic_baseline_star_border_24 ),
-                                    contentDescription = "",
-                                    modifier = Modifier.width(28.dp),
-                                    tint = Color.Black
-                                )
-                                */
 
                             }
 
                         }
                     }
-                    /*if (expandedState) {
-                        Text(
-                            text = "TOTAL",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = getTextColor(index),
-                            modifier = Modifier.padding(top = 12.dp, bottom = 16.dp)
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Button(
-                                onClick = {
-                                    /*
-                                navController.navigate("deposit".plus("/${gson.toJson(purse)}")) {
-                                    navController.graph.startDestinationRoute?.let { screen_route ->
-                                        popUpTo(screen_route) {
-                                            saveState = true
-                                        }
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }*/
-                                },
-                                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
-                            ) {
-                                Text(
-                                    text = "Depositar",
-                                    color = getTextColor(index)
-                                )
-                            }
-                            Button(
-                                onClick = { /*TODO*/ },
-                                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
-                            ) {
-                                Text(
-                                    text = "Compartir código",
-                                    color = getTextColor(index)
-                                )
-                            }
-                        }
-                    }*/
+
                 }
             }
 
@@ -354,28 +304,24 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
             ) {
                 Card (
                     elevation = 0.dp,
-
-
-
                 ) {
 
                     Row {
-                        Button(
-                            onClick = {isFavorite=!isFavorite },
-                            Modifier.padding(0.dp)
-                        ) {
-
-
                             Icon(
                                 Icons.Filled.Favorite,
 
                                 contentDescription = "",
-                                modifier = Modifier.width(28.dp),
+
+
+                                modifier = Modifier.width(28.dp)
+                                    .clickable {
+                                        isFavorite=!isFavorite
+
+
+                                    },
                                 tint = getTextColorFav(isFavorite),
 
-
-                                )
-                        }
+                            )
                         Text(
                             text = "Me encanta",
                             modifier = Modifier
@@ -451,7 +397,7 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                     elevation = 0.dp,
                     onClick = {
 
-                        navController.navigate("comentarios_posts") {
+                        navController.navigate("libro_resena_cita") {
                             navController.graph.startDestinationRoute?.let { screen_route ->
                                 popUpTo(screen_route) {
                                     saveState = true
@@ -504,7 +450,10 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
 
     }
 
-    @Composable
+
+}
+/*
+@Composable
     fun BookImage(
         imageLink: ImageLinks?,
         ActualImageModifier: Modifier,
@@ -530,7 +479,7 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
             )
         }
     }
-}
+ */
 
 fun getTextColorFav (index: Boolean): Color {
     if(index==false)
