@@ -452,7 +452,7 @@ fun LoginForm(activity: Activity) {
         )
         Text(text = "Acceder con cuenta de Google", Modifier.padding(start = 10.dp))
     }
-    Text(
+    /*Text(
         text = "... o puede ingresar sin usuario.",
         modifier = Modifier
             .padding(vertical = 5.dp)
@@ -465,7 +465,7 @@ fun LoginForm(activity: Activity) {
         fontSize = 12.sp,
         color = LB50_900,
         textDecoration = TextDecoration.Underline
-    )
+    )*/
 }
 
 @Composable

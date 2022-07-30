@@ -577,24 +577,26 @@ fun nuevaResena(
                 if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty()) {
                     showAlert(context, 1)
                 } else {
-                    dbf.collection("libros").document(query).get()
+                    dbf.collection("libros").document(bookId).get()
                         .addOnCompleteListener {
                             if (it.isSuccessful) {
                                 if (!it.getResult().exists()) {
-                                    dbf.collection("libros").document(query).set(
+                                    dbf.collection("libros").document(bookId).set(
                                         hashMapOf(
-                                            "nombre" to query,
-                                            "info" to "información del libro"
+                                            "nombre" to query.replace('/','-'),
+                                            "info" to "información del libro",
+                                            "book_id" to bookId
                                         )
                                     )
                                 }
                                 dbf.collection("resenias").document().set(
                                     hashMapOf(
-                                        "libro" to query,
+                                        "libro" to query.replace('/','-'),
                                         "resenia" to inputTextCita.value.text,
                                         "autor_email" to email,
                                         "autor_username" to username,
-                                        "autor_tag" to tag
+                                        "autor_tag" to tag,
+                                        "book_id" to bookId
                                     )
                                 )
                             }
@@ -882,14 +884,15 @@ fun nuevaCita(
                     if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty() || author.isNullOrEmpty()) {
                         showAlert(context, 1)
                     } else {
-                        dbf.collection("libros").document(query).get()
+                        dbf.collection("libros").document(bookId).get()
                             .addOnCompleteListener {
                                 if (it.isSuccessful) {
                                     if (!it.getResult().exists()) {
-                                        dbf.collection("libros").document(query).set(
+                                        dbf.collection("libros").document(bookId).set(
                                             hashMapOf(
-                                                "nombre" to query,
-                                                "autor" to author
+                                                "nombre" to query.replace('/','-'),
+                                                "autor" to author,
+                                                "book_id" to bookId
                                             )
                                         )
                                     }
@@ -901,20 +904,22 @@ fun nuevaCita(
                                                         .document(inputTextCita.value.text).set(
                                                             hashMapOf(
                                                                 "texto" to inputTextCita.value.text,
-                                                                "libro" to query,
-                                                                "autor" to author
+                                                                "libro" to query.replace('/','-'),
+                                                                "autor" to author,
+                                                                "book_id" to bookId
                                                             )
                                                         )
                                                 }
                                                 dbf.collection("comentarios").document().set(
                                                     hashMapOf(
                                                         "texto" to inputTextCita.value.text,
-                                                        "libro" to query,
+                                                        "libro" to query.replace('/','-'),
                                                         "autor" to author,
                                                         "comentario" to inputComentario.value.text,
                                                         "autor_email" to email,
                                                         "autor_username" to username,
-                                                        "autor_tag" to tag
+                                                        "autor_tag" to tag,
+                                                        "book_id" to bookId
                                                     )
                                                 )
                                             }
