@@ -32,6 +32,14 @@ class Preferencias(
             preferences[TAG] = noteTag
         }
     }
+    suspend fun setCredentials(noteEstado: Boolean, noteNombre: String, noteEmail: String, noteTag: String){
+        context.dataStore.edit { preferences ->
+            preferences[ESTADO_SESION] = noteEstado
+            preferences[NOMBRE] = noteNombre
+            preferences[EMAIL] = noteEmail
+            preferences[TAG] = noteTag
+        }
+    }
 
     suspend fun saveSkipSesion(noteSkip: Boolean){
         context.dataStore.edit { preferences ->

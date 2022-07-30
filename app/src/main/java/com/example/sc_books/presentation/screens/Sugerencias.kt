@@ -1,6 +1,6 @@
 package com.example.sc_books.presentation.screens
 
-import android.content.Intent
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,16 +27,11 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -44,48 +39,117 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.dataStore
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.example.sc_books.datastore.Preferencias
 import com.example.sc_books.firebase.models.Review
-import com.example.sc_books.model.ImageLinks
-import com.example.sc_books.presentation.MainActivity
 import com.example.sc_books.ui.theme.LB50_900
 import com.example.sc_books.ui.theme.SCBooksTheme
 
 import com.example.sc_books.ui.theme.bordePerfil
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 
 @Composable
-fun Sugerencias(navController: NavHostController){
+fun Sugerencias(navController: NavHostController) {
     var postsSugerenciasList = listOf(
-        Review("1","nombre Imagen","@UsuarioLec","Reseña",1,"Alicia en el Pais de las Maravillas","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....","direccionImagenLibro"),
-        Review("1","nombre Imagen","@UsuarioLec123","Cita",1,"Alicia en el Pais de las Maravillas","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida .....","direccionImagenLibro"),
-        Review("1","nombre Imagen","@Comegoma","Reseña",1,"Alicia en el Pais de las Maravillas","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso.....","direccionImagenLibro"),
-        Review("1","nombre Imagen","@Abc123","Cita",1,"Alicia en el Pais de las Maravillas","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....","direccionImagenLibro"),
-        Review("1","nombre Imagen","@Usertttt","Cita",1,"Alicia en el Pais de las Maravillas","Realmente me parece una historia fascinante.","direccionImagenLibro"),
-        Review("1","nombre Imagen","@LikeLibros","Reseña",1,"Alicia en el Pais de las Maravillas","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....","direccionImagenLibro"),
+        Review(
+            "1",
+            "nombre Imagen",
+            "@UsuarioLec",
+            "Reseña",
+            1,
+            "Alicia en el Pais de las Maravillas",
+            "Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....",
+            "direccionImagenLibro"
+        ),
+        Review(
+            "1",
+            "nombre Imagen",
+            "@UsuarioLec123",
+            "Cita",
+            1,
+            "Alicia en el Pais de las Maravillas",
+            "Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida .....",
+            "direccionImagenLibro"
+        ),
+        Review(
+            "1",
+            "nombre Imagen",
+            "@Comegoma",
+            "Reseña",
+            1,
+            "Alicia en el Pais de las Maravillas",
+            "Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso.....",
+            "direccionImagenLibro"
+        ),
+        Review(
+            "1",
+            "nombre Imagen",
+            "@Abc123",
+            "Cita",
+            1,
+            "Alicia en el Pais de las Maravillas",
+            "Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....",
+            "direccionImagenLibro"
+        ),
+        Review(
+            "1",
+            "nombre Imagen",
+            "@Usertttt",
+            "Cita",
+            1,
+            "Alicia en el Pais de las Maravillas",
+            "Realmente me parece una historia fascinante.",
+            "direccionImagenLibro"
+        ),
+        Review(
+            "1",
+            "nombre Imagen",
+            "@LikeLibros",
+            "Reseña",
+            1,
+            "Alicia en el Pais de las Maravillas",
+            "Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....",
+            "direccionImagenLibro"
+        ),
 
-    )
+        )
+    var listado = remember { mutableListOf<Resenia>() }
+    var mostrar = remember { mutableStateOf(false) }
+    var imagen = remember { mutableStateOf("") }
+    val fav = remember{ mutableStateOf(false)}
+
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val tag2 = dataStore.getTag.collectAsState(initial = "").toString()
+    val tag = remember{ mutableStateOf(tag2)}
+
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colors.background)
-            .padding(top = 24.dp, start = 24.dp, end = 24.dp)
-        ,
+            .padding(top = 24.dp, start = 24.dp, end = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "¡¡ Que bueno tenerte por aquí",
             fontWeight = FontWeight.Bold,
-            color = if (isSystemInDarkTheme()) Color.Black else Color.Black,
+            color = if (isSystemInDarkTheme()) Color.White else Color.Black,
             textAlign = TextAlign.Center,
             fontSize = 24.sp,
             modifier = Modifier.width(260.dp)
         )
         Text(
-            text = "@nombreDeUsuario !!", //purse.name
+            text = "@" + dataStore.getNombre.collectAsState(initial = "").value + " !!", //purse.name
             fontWeight = FontWeight.Bold,
-            color = if (isSystemInDarkTheme()) MaterialTheme.colors.primaryVariant else MaterialTheme.colors.primaryVariant,
+            color = if (isSystemInDarkTheme()) Color.White else MaterialTheme.colors.primaryVariant,
             textAlign = TextAlign.Center,
             fontSize = 24.sp,
             modifier = Modifier.width(260.dp)
@@ -100,7 +164,7 @@ fun Sugerencias(navController: NavHostController){
         false -> Unit
     } */
 
-        LazyColumn(
+        /*LazyColumn(
             modifier = Modifier
                 .fillMaxWidth(),
             state = listState
@@ -117,7 +181,77 @@ fun Sugerencias(navController: NavHostController){
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+        }*/
+
+        dbf.collection("resenias").limit(25).get()
+            .addOnSuccessListener {
+                var cont = 0;
+                if (listado.size < it.size()) {
+                    for (resen in it) {
+
+                        //var imagen: String
+                        dbf.collection("libros").document("book_id").get()
+                            .addOnSuccessListener { document ->
+                                if (document != null) {
+                                    imagen.value = document.data?.get("imagen").toString()
+                                } else {
+                                    imagen.value =
+                                        "https://edit.org/images/cat/portadas-libros-big-2019101610.jpg"
+                                }
+
+                            }
+                        dbf.collection("favoritos").document(tag.value+resen.id).get()
+                            .addOnCompleteListener{cor->
+                                if (cor.isSuccessful){
+                                    if (cor.getResult().exists()){
+                                        fav.value = true
+                                    }
+                                }
+                            }
+
+                        listado.add(
+                            cont, Resenia(
+                                resen.data?.get("autor_email").toString(),
+                                resen.data?.get("autor_tag").toString(),
+                                resen.data?.get("autor_username").toString(),
+                                resen.data?.get("libro").toString(),
+                                resen.data?.get("resenia").toString(),
+                                resen.data?.get("book_id").toString(),
+                                imagen.value,
+                                fav,
+                                resen.id,
+                                tag.value
+                            )
+                        )
+                        cont++
+
+
+                    }
+                }
+                mostrar.value = true
+            }
+        if (mostrar.value){
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                state = listState
+            ) {
+                Thread.sleep(2000)
+                items(listado) { doc ->
+                    if (doc != null) {
+                        PurseCard(doc, index, navController)
+                        index += 1
+                    }
+                    Divider(
+                        color = bordePerfil,
+                        thickness = 5.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+            }
         }
+
 
     }
 
@@ -126,16 +260,23 @@ fun Sugerencias(navController: NavHostController){
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun PurseCard(review: Review, index: Int, navController: NavHostController) {
+fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
     var isFavorite by remember { mutableStateOf(false) }
     val gson = Gson()
     var expandedState by remember { mutableStateOf(false) }
     val linesState by animateIntAsState(targetValue = if (expandedState) Int.MAX_VALUE else 3)
-
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val tag2 = dataStore.getTag.collectAsState(initial = "").value
+    val email = dataStore.getEmail.collectAsState(initial = "").value
+    val tag = remember{ mutableStateOf(tag2)}
     val rotationState by animateFloatAsState(
         targetValue = if (expandedState) 90f else 0f
     )
-    Card (
+    Card(
         elevation = 0.dp,
         modifier = Modifier
             .fillMaxWidth()
@@ -154,13 +295,15 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
             else -> Color.White
         }
     ) {
-        Column (modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = 10.dp,
-                //end = 10.dp,
-                bottom = 10.dp
-            )){
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    top = 10.dp,
+                    //end = 10.dp,
+                    bottom = 10.dp
+                )
+        ) {
 
 
             Row(
@@ -221,7 +364,7 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                         ) {
                             Column {
                                 Text(
-                                    text = review.user_name,
+                                    text = "@" + review.autor_username + "#" + review.autor_tag,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     fontSize = 16.sp,
@@ -229,7 +372,7 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                                     color = getTextColor(index)
                                 )
                                 Text(
-                                    text = review.review_type_name,
+                                    text = "reseña", //text = review.review_type_name,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     fontSize = 14.sp,
@@ -256,16 +399,16 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
             }
 
             Text(
-                text = "#"+ review.book_name,
-                color=LB50_900
+                text = "#" + review.libro,
+                color = LB50_900
             )
 
             Text(
-                text= review.review_content,
-                maxLines = if(expandedState) Int.MAX_VALUE else 3,
+                text = review.resenia,
+                maxLines = if (expandedState) Int.MAX_VALUE else 3,
 
 
-            )
+                )
 
             Text(
                 text = "Ver nás...",
@@ -281,11 +424,11 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                 textDecoration = TextDecoration.Underline
             )
 
-            Row (modifier = Modifier.align(alignment = Alignment.CenterHorizontally))
-                {
+            Row(modifier = Modifier.align(alignment = Alignment.CenterHorizontally))
+            {
 
                 Image(
-                    painter = rememberAsyncImagePainter("https://edit.org/images/cat/portadas-libros-big-2019101610.jpg"),
+                    painter = rememberAsyncImagePainter("http://books.google.com/books/content?id=z2hczgEACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api"),
                     contentDescription = "",
                     modifier = Modifier
                         .size(120.dp)
@@ -294,48 +437,64 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
             }
 
 
-            Row(modifier=Modifier
-                .fillMaxWidth(),
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Card (
+                Card(
                     elevation = 0.dp,
                 ) {
 
                     Row {
-                            Icon(
-                                Icons.Filled.Favorite,
-                                contentDescription = "",
-                                modifier = Modifier.width(28.dp)
-                                    .clickable {
-                                        isFavorite=!isFavorite
-                                    },
-                                tint = getTextColorFav(isFavorite),
+                        Icon(
+                            Icons.Filled.Favorite,
+
+                            contentDescription = "",
+
+
+                            modifier = Modifier
+                                .width(28.dp)
+                                .clickable {
+                                    review.favorito.value = !review.favorito.value
+                                    if (review.favorito.value){
+                                        dbf.collection("favoritos").document(review.tag_user+review.id).set(
+                                            hashMapOf(
+                                                "favorito" to true
+                                            )
+                                        )
+                                    }
+                                    else{
+                                        //Toast.makeText(context,email,Toast.LENGTH_SHORT).show()
+                                        dbf.collection("favoritos").document(review.tag_user+review.id).delete()
+                                    }
+                                },
+                            tint = getTextColorFav(review.favorito.value),
 
                             )
                         Text(
                             text = "Me encanta",
                             modifier = Modifier
-                                .padding(vertical = 5.dp)
+                                .padding(vertical = 5.dp),
 
-                                /*.clickable {
-                                    navController.navigate("comentarios_posts") {
-                                        navController.graph.startDestinationRoute?.let { screen_route ->
-                                            popUpTo(screen_route) {
-                                                saveState = true
-                                            }
+                            /*.clickable {
+                                navController.navigate("comentarios_posts") {
+                                    navController.graph.startDestinationRoute?.let { screen_route ->
+                                        popUpTo(screen_route) {
+                                            saveState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
-                                }*/,
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }*/
                             fontSize = 12.sp,
                             color = LB50_900,
 
-                        )
+                            )
                     }
                 }
-                Card (
+                Card(
                     elevation = 0.dp,
                     onClick = {
                         navController.navigate("comentarios_posts") {
@@ -350,7 +509,6 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                     }
 
 
-
                 ) {
 
                     Row {
@@ -363,7 +521,7 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                         Text(
                             text = "Comentar",
                             modifier = Modifier
-                                .padding(vertical = 5.dp)
+                                .padding(vertical = 5.dp),
 
                             /*.clickable {
                                 navController.navigate("comentarios_posts") {
@@ -375,14 +533,14 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                                     launchSingleTop = true
                                     restoreState = true
                                 }
-                            }*/,
+                            }*/
                             fontSize = 12.sp,
                             color = LB50_900,
 
                             )
                     }
                 }
-                Card (
+                Card(
                     elevation = 0.dp,
                     onClick = {
                         navController.navigate("libro_resena_cita") {
@@ -395,6 +553,8 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                             restoreState = true
                         }
                     }
+
+
                 ) {
 
                     Row {
@@ -407,7 +567,7 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                         Text(
                             text = "Ver Libro",
                             modifier = Modifier
-                                .padding(vertical = 5.dp)
+                                .padding(vertical = 5.dp),
 
                             /*.clickable {
                                 navController.navigate("comentarios_posts") {
@@ -419,7 +579,7 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                                     launchSingleTop = true
                                     restoreState = true
                                 }
-                            }*/,
+                            }*/
                             fontSize = 12.sp,
                             color = LB50_900,
 
@@ -427,6 +587,8 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                     }
                 }
             }
+
+
         }
 
     }
@@ -461,8 +623,8 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
     }
  */
 
-fun getTextColorFav (index: Boolean): Color {
-    if(index==false)
+fun getTextColorFav(index: Boolean): Color {
+    if (index == false)
         return Color.Gray
     else
         return Color.Red
@@ -479,9 +641,60 @@ fun getTextColor(index: Int): Color {
 
 @Preview
 @Composable
-fun  PreviewComponent(){
+fun PreviewComponent() {
     SCBooksTheme {
-        com.example.sc_books.presentation.screens.Sugerencias(navController = NavHostController(
-            LocalContext.current))
+        com.example.sc_books.presentation.screens.Sugerencias(
+            navController = NavHostController(
+                LocalContext.current
+            )
+        )
     }
 }
+
+@Composable
+fun LinearProgressIndicatorSample() {
+    var progress by remember { mutableStateOf(0.1f) }
+    val animatedProgress = animateFloatAsState(
+        targetValue = progress,
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+    ).value
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Spacer(Modifier.height(30.dp))
+        Text("LinearProgressIndicator with undefined progress")
+        LinearProgressIndicator()
+        Spacer(Modifier.height(30.dp))
+        Text("LinearProgressIndicator with progress set by buttons")
+        LinearProgressIndicator(progress = animatedProgress)
+        Spacer(Modifier.height(30.dp))
+        OutlinedButton(
+            onClick = {
+                if (progress < 1f) progress += 0.1f
+            }
+        ) {
+            Text("Increase")
+        }
+
+        OutlinedButton(
+            onClick = {
+                if (progress > 0f) progress -= 0.1f
+            }
+        ) {
+            Text("Decrease")
+        }
+    }
+}
+
+data class Resenia(
+    val autor_email: String,
+    val autor_tag: String,
+    val autor_username: String,
+    val libro: String,
+    val resenia: String,
+    val book_id: String,
+    val imagen: String,
+    val favorito: MutableState<Boolean>,
+    val id: String,
+    val tag_user: String
+)
