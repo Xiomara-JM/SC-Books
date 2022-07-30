@@ -1,8 +1,8 @@
-
 package com.example.sc_books.presentation.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -17,29 +17,22 @@ import androidx.activity.result.launch
 import androidx.compose.animation.Animatable
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import com.example.sc_books.R
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ImageSearch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextRange
 
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -49,38 +42,32 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
-import com.example.sc_books.presentation.components.QuerySearch
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.key.Key.Companion.Sleep
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
+import androidx.core.content.FileProvider
 import com.example.sc_books.datastore.Preferencias
-import com.example.sc_books.presentation.LoginForm
-import com.example.sc_books.presentation.SignUpForm
 import com.example.sc_books.presentation.showAlert
 import com.example.sc_books.ui.theme.*
 //import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.sc_books.viewmodels.BookViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import java.io.File
 
 import java.io.IOException
 
@@ -89,7 +76,7 @@ import java.io.IOException
 fun NuevoPost(
     navController: NavHostController,
     navSug: () -> Unit
-){
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -111,10 +98,10 @@ fun NuevoPost(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PopupWindowDialog(navController: NavHostController) {
-    var openDialog = remember { mutableStateOf(true)}
-    var openNuevaResena = remember { mutableStateOf(false)}
-    var openCitaGaleria = remember { mutableStateOf(false)}
-    var openCitaCamara = remember { mutableStateOf(false)}
+    var openDialog = remember { mutableStateOf(true) }
+    var openNuevaResena = remember { mutableStateOf(false) }
+    var openCitaGaleria = remember { mutableStateOf(false) }
+    var openCitaCamara = remember { mutableStateOf(false) }
 
     val tabItems = listOf("Nueva reseña", "Nueva Cita")
     val pagerState = rememberPagerState()
@@ -186,33 +173,31 @@ fun PopupWindowDialog(navController: NavHostController) {
                 .fillMaxSize()
                 .background(Purple200)
         ) { page ->
-            if (page == 0){
-                Column (
+            if (page == 0) {
+                Column(
                     modifier = Modifier
                         //.fillMaxSize()
                         .padding(10.dp),
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     nuevaResena()
                 }
 
-            }
-            else{
-                Column (
+            } else {
+                Column(
                     modifier = Modifier
                         //.fillMaxSize()
                         .padding(10.dp),
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     nuevaCita()
                 }
             }
 
         }
     }
-
 
 
     /*Column(
@@ -379,7 +364,8 @@ fun nuevaResena(
             textStyle = TextStyle(fontSize = 14.sp),
             leadingIcon = { Icon(Icons.Filled.Search, null, tint = Color.Gray) },
             label = {
-                Text(text = "Buscar un libro",
+                Text(
+                    text = "Buscar un libro",
                     color = Purple200
                 )
             },
@@ -394,7 +380,7 @@ fun nuevaResena(
                 .background(Color(0xFFE7F1F1), RoundedCornerShape(16.dp)),
             placeholder = { Text(text = "Escriba su busqueda") },
 
-            keyboardOptions = KeyboardOptions (
+            keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Search
             ),
@@ -431,12 +417,11 @@ fun nuevaResena(
             onClick = {
                 if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty()) {
                     showAlert(context, 1)
-                }
-                else {
+                } else {
                     dbf.collection("libros").document(query).get()
-                        .addOnCompleteListener{
-                            if (it.isSuccessful){
-                                if (!it.getResult().exists()){
+                        .addOnCompleteListener {
+                            if (it.isSuccessful) {
+                                if (!it.getResult().exists()) {
                                     dbf.collection("libros").document(query).set(
                                         hashMapOf(
                                             "nombre" to query,
@@ -461,7 +446,8 @@ fun nuevaResena(
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = Purple700,
-                contentColor = Color.White),
+                contentColor = Color.White
+            ),
             modifier = Modifier
                 .padding(top = 9.dp)
                 .width(200.dp)
@@ -484,15 +470,16 @@ fun nuevaCita() {
     val username = dataStore.getNombre.collectAsState(initial = "").value
     val tag = dataStore.getTag.collectAsState(initial = "").value
 
-    var imagenBitmap by rememberSaveable{ mutableStateOf<Bitmap?>(null)}
-    var imagenUri by rememberSaveable{ mutableStateOf<Uri?>(null)}
-    var escaneo by rememberSaveable{mutableStateOf("")}
-    var inputTextCita = remember{ mutableStateOf(TextFieldValue()) }
+    var imagenBitmap by rememberSaveable { mutableStateOf<Bitmap?>(null) }
+    var imagenUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var escaneo by rememberSaveable { mutableStateOf("") }
+    var inputTextCita = remember { mutableStateOf(TextFieldValue()) }
+    val mostrar = remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
-    Column (
+    Column(
         modifier = Modifier.padding(bottom = 30.dp)
-    ){
+    ) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -537,7 +524,38 @@ fun nuevaCita() {
 
                 Icon(imageVector = Icons.Default.ImageSearch, contentDescription = null)
             }
-            TomarImagen(onImageCapture = {imagenBitmap = it}, onUriCapture = {imagenUri = it})
+
+            if (mostrar.value) {
+                imagenUri?.let {
+                    if (Build.VERSION.SDK_INT < 28) {
+                        imagenBitmap = MediaStore.Images
+                            .Media.getBitmap(context.contentResolver, it)
+
+                    } else {
+                        val source = ImageDecoder
+                            .createSource(context.contentResolver, it)
+                        imagenBitmap = ImageDecoder.decodeBitmap(source)
+                    }
+
+                    imagenBitmap?.let { btm ->
+                        Image(
+                            bitmap = btm.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier.size(300.dp)
+                        )
+                    }
+                }
+            }
+
+
+            /*TomarImagen(
+                onImageCapture = { imagenBitmap = it },
+                onUriCapture = { imagenUri = it })*/
+            mayorCalidad(
+                context = context,
+                onUriCapture = { imagenUri = it },
+                escribir = { inputTextCita.value = it })
+
             /*Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
 
@@ -547,7 +565,7 @@ fun nuevaCita() {
                     .padding(bottom = 32.dp, top = 32.dp),
                 alignment = Alignment.Center,
             )*/
-            EscanearImagen(imagenBitmap,  imagenUri, escribir = {inputTextCita.value = it})
+            //EscanearImagen(imagenUri, escribir = { inputTextCita.value = it })
             Text(
                 text = "Texto en claro (Cita)",
                 fontSize = 16.sp,
@@ -582,7 +600,46 @@ fun nuevaCita() {
             )
             Button(
                 onClick = {
-                    Toast.makeText(context, "$email y $username y $tag", Toast.LENGTH_SHORT).show()
+                    if (inputTituloLibro.value.text.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty()) {
+                        showAlert(context, 1)
+                    } else {
+                        dbf.collection("libros").document(inputTituloLibro.value.text).get()
+                            .addOnCompleteListener {
+                                if (it.isSuccessful) {
+                                    if (!it.getResult().exists()) {
+                                        dbf.collection("libros").document(inputTituloLibro.value.text).set(
+                                            hashMapOf(
+                                                "nombre" to inputTituloLibro.value.text,
+                                                "info" to "información del libro (parte cita)"
+                                            )
+                                        )
+                                    }
+                                    dbf.collection("citas").document(inputTextCita.value.text).get()
+                                        .addOnCompleteListener{ cita->
+                                            if (cita.isSuccessful) {
+                                                if (!cita.getResult().exists()) {
+                                                    dbf.collection("citas").document(inputTextCita.value.text).set(
+                                                        hashMapOf(
+                                                            "texto" to inputTextCita.value.text,
+                                                            "libro" to inputTituloLibro.value.text
+                                                        )
+                                                    )
+                                                }
+                                                dbf.collection("comentarios").document().set(
+                                                    hashMapOf(
+                                                        "texto" to inputTextCita.value.text,
+                                                        "libro" to inputTituloLibro.value.text,
+                                                        "comentario" to inputComentario.value.text,
+                                                        "autor_email" to email,
+                                                        "autor_username" to username,
+                                                        "autor_tag" to tag
+                                                    )
+                                                )
+                                            }
+                                        }
+                                }
+                            }
+                    }
                 },
                 modifier = Modifier
                     .width(220.dp)
@@ -590,9 +647,6 @@ fun nuevaCita() {
             ) {
                 Text(text = "Subir Post de Cita")
             }
-
-
-
 
 
             /*val inputNameState = remember { mutableStateOf(TextFieldValue()) }
@@ -626,60 +680,137 @@ fun nuevaCita() {
 }
 
 @Composable
-fun EscanearImagen(imagenBitmap: Bitmap?, imagenUri: Uri?, escribir: (TextFieldValue) -> Unit) {
+fun mayorCalidad(
+    context: Context,
+    onUriCapture: (Uri?) -> Unit,
+    escribir: (TextFieldValue) -> Unit
+) {
+    val mCheckedState = remember { mutableStateOf(true) }
+    var inputTextCita = remember { mutableStateOf(TextFieldValue()) }
+    var imageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
+    val camaraOn = remember { mutableStateOf(false) }
+    val editable = remember { mutableStateOf(false) }
+    val galleryOn = remember { mutableStateOf(false) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri = uri
+    }
+
+    val resultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            if (galleryOn.value) {
+                galleryLauncher.launch("image/*")
+            }
+            if (camaraOn.value) {
+                imageUri = FileProvider.getUriForFile(
+                    context,
+                    context.packageName + ".provider",
+                    File(context.filesDir, "picFromCamera")
+                )
+                resultLauncher.launch(imageUri)
+            }
+            Toast.makeText(context, "Permiso concedido!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Permiso denegado!", Toast.LENGTH_SHORT).show()
+        }
+    }
+    Row() {
+
+
+        Button(onClick = {
+            camaraOn.value = true
+            galleryOn.value = false
+            mCheckedState.value = false
+            when (PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.CAMERA
+                ) -> {
+                    imageUri = FileProvider.getUriForFile(
+                        context,
+                        context.packageName + ".provider",
+                        File(context.filesDir, "picFromCamera")
+                    )
+                    resultLauncher.launch(imageUri)
+                }
+                else -> {
+                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                }
+            }
+        }) {
+            Text(text = "Capturar foto")
+        }
+        Button(onClick = {
+            camaraOn.value = false
+            galleryOn.value = true
+            when (PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.READ_EXTERNAL_STORAGE
+                ) -> {
+                    galleryLauncher.launch("image/*")
+                }
+                else -> {
+                    permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
+            }
+        }) {
+            Text(text = "Galeria")
+        }
+    }
+    Row() {
+
+        Button(onClick = {
+            editable.value = true
+            mCheckedState.value = false
+            mCheckedState.value = true
+            mCheckedState.value = false
+        }) {
+            Text(text = "Analizar")
+        }
+        if (editable.value) {
+            Text(text = "Editar: ")
+            Switch(checked = mCheckedState.value, onCheckedChange = { mCheckedState.value = it })
+        }
+
+    }
+
+    EscanearImagen(imagenUri = imageUri, escribir = { inputTextCita.value = it })
+    if (!mCheckedState.value) {
+        escribir(TextFieldValue(inputTextCita.value.text))
+    }
+
+
+}
+
+
+@Composable
+fun EscanearImagen(imagenUri: Uri?, escribir: (TextFieldValue) -> Unit) {
     val context = LocalContext.current
     //val recognizer = remember(mutableStateOf(TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)))
     val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-    imagenBitmap?.let { btm ->
-        val image = InputImage.fromBitmap(btm, 0)
-
-        val result = recognizer.process(image)
-            .addOnSuccessListener { visionText ->
-                escribir(TextFieldValue(visionText.text))
-                //Log.d("Estado", visionText.text)
-                //Toast.makeText(context, "Ya se verificó! ${visionText.text} .", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener { e ->
-                Log.d("Estado", e.message.toString())
-                //Toast.makeText(context, "Aún no!", Toast.LENGTH_SHORT).show()
-            }
-    }
     imagenUri?.let { uri ->
-        var btm by  remember {
-            mutableStateOf<Bitmap?>(null)
-        }
-        if (Build.VERSION.SDK_INT < 28) {
-            btm = MediaStore.Images
-                .Media.getBitmap(context.contentResolver,uri)
 
-        } else {
-            val source = ImageDecoder
-                .createSource(context.contentResolver,uri)
-            btm = ImageDecoder.decodeBitmap(source)
-        }
 
-        btm?.let {  bitmaImage ->
-            Image(
-                bitmap = bitmaImage.asImageBitmap(),
-                contentDescription =null,
-                modifier = Modifier.size(400.dp)
-            )
-        }
-
-        //val image = InputImage.fromBitmap(btm, 0)
         val image: InputImage
         try {
             image = InputImage.fromFilePath(context, uri)
             val result = recognizer.process(image)
                 .addOnSuccessListener { visionText ->
                     escribir(TextFieldValue(visionText.text))
-                    //Log.d("Estado", visionText.text)
-                    //Toast.makeText(context, "Ya se verificó! ${visionText.text} .", Toast.LENGTH_SHORT).show()
                 }
                 .addOnFailureListener { e ->
                     Log.d("Estado", e.message.toString())
-                    //Toast.makeText(context, "Aún no!", Toast.LENGTH_SHORT).show()
                 }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -688,19 +819,19 @@ fun EscanearImagen(imagenBitmap: Bitmap?, imagenUri: Uri?, escribir: (TextFieldV
 }
 
 
-@Composable
+/*@Composable
 fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit) {
 
     var imageUri by remember {
         mutableStateOf<Uri?>(null)
     }
     val context = LocalContext.current
-    var bitmapDos by  remember {
+    var bitmapDos by remember {
         mutableStateOf<Bitmap?>(null)
     }
 
-    val camaraOn = remember{mutableStateOf(false)}
-    val galleryOn = remember { mutableStateOf(false)}
+    val camaraOn = remember { mutableStateOf(false) }
+    val galleryOn = remember { mutableStateOf(false) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -720,10 +851,10 @@ fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit)
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            if (galleryOn.value){
+            if (galleryOn.value) {
                 galleryLauncher.launch("image/*")
             }
-            if (camaraOn.value){
+            if (camaraOn.value) {
                 cameraLauncher.launch()
             }
             Toast.makeText(context, "Permiso concedido!", Toast.LENGTH_SHORT).show()
@@ -756,7 +887,7 @@ fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit)
                 ContextCompat.checkSelfPermission(
                     context, Manifest.permission.READ_EXTERNAL_STORAGE
                 ) -> {
-                    galleryLauncher.launch("image/*")
+                    //galleryLauncher.launch("image/*")
                 }
                 else -> {
                     permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -767,24 +898,24 @@ fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit)
         }
     }
 
-    if (galleryOn.value){
+    if (galleryOn.value) {
         imageUri?.let {
             if (Build.VERSION.SDK_INT < 28) {
                 bitmapDos = MediaStore.Images
-                    .Media.getBitmap(context.contentResolver,it)
+                    .Media.getBitmap(context.contentResolver, it)
 
             } else {
                 val source = ImageDecoder
-                    .createSource(context.contentResolver,it)
+                    .createSource(context.contentResolver, it)
                 bitmapDos = ImageDecoder.decodeBitmap(source)
             }
 
             onUriCapture(it)
             onImageCapture(null)
-            bitmapDos?.let {  btm ->
+            bitmapDos?.let { btm ->
                 Image(
                     bitmap = btm.asImageBitmap(),
-                    contentDescription =null,
+                    contentDescription = null,
                     modifier = Modifier.size(400.dp)
                 )
             }
@@ -804,6 +935,4 @@ fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit)
     }
 
 }
-
-
-
+*/

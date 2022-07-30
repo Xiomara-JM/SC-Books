@@ -32,7 +32,7 @@ import com.example.sc_books.ui.theme.Purple700
 import com.google.android.gms.tasks.Task
 
 
-@RequiresApi(Build.VERSION_CODES.M)
+
 @Composable
 fun PerfilUsuario(navController: NavHostController) {
 
