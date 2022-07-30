@@ -130,10 +130,8 @@ class MainActivity : ComponentActivity() {
                                                     val username = it.result.data?.get("username").toString()
                                                     val email = account.email
                                                     lifecycleScope.launch{
-                                                        dataStore.saveEstadoSesion(true)
-                                                        dataStore.saveNombre(username)
-                                                        dataStore.saveEmail(email?:"")
-                                                        dataStore.saveTag(tag)
+                                                        dataStore.setCredentials(true, username?:"",
+                                                            email?:"",tag)
                                                     }
                                                     showAlert(this, 5)
                                                 }

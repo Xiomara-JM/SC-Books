@@ -585,7 +585,8 @@ fun nuevaResena(
                                         hashMapOf(
                                             "nombre" to query.replace('/','-'),
                                             "info" to "información del libro",
-                                            "book_id" to bookId
+                                            "book_id" to bookId,
+                                            "imagen" to book?.volumeInfo?.imageLinks?.thumbnail
                                         )
                                     )
                                 }
