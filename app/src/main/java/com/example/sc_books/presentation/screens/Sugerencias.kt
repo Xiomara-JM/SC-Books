@@ -45,6 +45,7 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.sc_books.datastore.Preferencias
 import com.example.sc_books.firebase.models.Review
+import com.example.sc_books.navigation.Destinations
 import com.example.sc_books.ui.theme.LB50_900
 import com.example.sc_books.ui.theme.SCBooksTheme
 
@@ -119,9 +120,7 @@ fun Sugerencias(navController: NavHostController) {
         )
     var listado = remember { mutableListOf<Resenia>() }
     var mostrar = remember { mutableStateOf(false) }
-    var imagen = remember { mutableStateOf("") }
     var cont = remember { mutableStateOf(0) }
-    val fav = remember{ mutableStateOf(false)}
 
     //DataStore
     val context = LocalContext.current
@@ -202,15 +201,7 @@ fun Sugerencias(navController: NavHostController) {
 
                             }*/
                         //var fav: Boolean = false
-                        dbf.collection("favoritos").document(tag+resen.id).get()
-                            .addOnCompleteListener{cor->
-                                if (cor.isSuccessful){
-                                    fav.value = cor.getResult().exists()
 
-                                }
-
-                                //Toast.makeText(context,tag+resen.id+" ${fav.value}", Toast.LENGTH_SHORT).show()
-                            }
                         listado.add(
                             cont.value, Resenia(
                                 resen.data?.get("autor_email").toString(),
@@ -219,16 +210,11 @@ fun Sugerencias(navController: NavHostController) {
                                 resen.data?.get("libro").toString(),
                                 resen.data?.get("resenia").toString(),
                                 resen.data?.get("book_id").toString(),
-                                imagen.value,
-                                fav.value,
                                 resen.id,
-                                tag
+                                tag,
+                                "Reseña"
                             )
                         )
-                        listado[cont.value]?.let {
-                            Log.d("holaSi", tag+resen.id+" ${fav.value} $cont")
-                        }
-
                         cont.value++
 
 
@@ -249,10 +235,10 @@ fun Sugerencias(navController: NavHostController) {
                     .fillMaxWidth(),
                 state = listState
             ) {
-                Thread.sleep(2000)
+                //Thread.sleep(2000)
                 items(listado) { doc ->
                     if (doc != null) {
-                        PurseCard(doc, index, navController)
+                        PurseCard(doc, index, navController, "Resena")
                         index += 1
                     }
                     Divider(
@@ -273,7 +259,7 @@ fun Sugerencias(navController: NavHostController) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
+fun PurseCard(review: Resenia, index: Int, navController: NavHostController, tipo: String) {
     var isFavorite by remember { mutableStateOf(false) }
     val gson = Gson()
     var expandedState by remember { mutableStateOf(false) }
@@ -384,7 +370,7 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                                     color = getTextColor(index)
                                 )
                                 Text(
-                                    text = "reseña", //text = review.review_type_name,
+                                    text = review.tipo, //text = review.review_type_name,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     fontSize = 14.sp,
@@ -416,7 +402,7 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
             )
 
             Text(
-                text = review.resenia,
+                text = review.textoContenido,
                 maxLines = if (expandedState) Int.MAX_VALUE else 3,
 
 
@@ -435,12 +421,28 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                 color = LB50_900,
                 textDecoration = TextDecoration.Underline
             )
+            val imagen = remember{ mutableStateOf("")}
+            dbf.collection("libros").document(review.book_id).get()
+                .addOnSuccessListener { document ->
+                    if (document != null) {
+                        imagen.value = document.data?.get("imagen").toString()
+                    } else {
+                        imagen.value =
+                            "https://edit.org/images/cat/portadas-libros-big-2019101610.jpg"
+                    }
+
+                }
 
             Row(modifier = Modifier.align(alignment = Alignment.CenterHorizontally))
             {
 
                 Image(
-                    painter = rememberAsyncImagePainter("http://books.google.com/books/content?id=z2hczgEACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api"),
+                    painter = rememberAsyncImagePainter(
+                        imagen.value.replace(
+                            "http://",
+                            "https://"
+                        )
+                    ),
                     contentDescription = "",
                     modifier = Modifier
                         .size(120.dp)
@@ -449,12 +451,14 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
             }
 
             val corazon = remember{ mutableStateOf(false)}
-            dbf.collection("favoritos").document(review.tag_user+review.id).get()
+            dbf.collection("favoritos$tipo").document(review.tag_user+review.id).get()
                 .addOnCompleteListener{
                     if (it.isSuccessful){
                         corazon.value = it.getResult().exists()
                     }
                 }
+
+
 
             Row(
                 modifier = Modifier
@@ -476,15 +480,17 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                                 .width(28.dp)
                                 .clickable {
                                     if (!corazon.value){
-                                        dbf.collection("favoritos").document(tag+review.id).set(
+                                        dbf.collection("favoritos$tipo").document(tag+review.id).set(
                                             hashMapOf(
-                                                "favorito" to true
+                                                "favorito" to true,
+                                                "tag" to tag,
+                                                "reviewId" to review.id
                                             )
                                         )
                                     }
                                     else{
                                         //Toast.makeText(context,email,Toast.LENGTH_SHORT).show()
-                                        dbf.collection("favoritos").document(tag+review.id).delete()
+                                        dbf.collection("favoritos$tipo").document(tag+review.id).delete()
                                     }
                                     corazon.value = !corazon.value
                                 },
@@ -562,7 +568,7 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                 Card(
                     elevation = 0.dp,
                     onClick = {
-                        navController.navigate("libro_resena_cita") {
+                        navController.navigate(Destinations.InfoLibro.createRoute(review.book_id)){
                             navController.graph.startDestinationRoute?.let { screen_route ->
                                 popUpTo(screen_route) {
                                     saveState = true
@@ -710,10 +716,9 @@ data class Resenia(
     val autor_tag: String,
     val autor_username: String,
     val libro: String,
-    val resenia: String,
+    val textoContenido: String,
     val book_id: String,
-    val imagen: String,
-    val favorito: Boolean,
     val id: String,
-    val tag_user: String
+    val tag_user: String,
+    val tipo: String
 )

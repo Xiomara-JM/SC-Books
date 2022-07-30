@@ -609,6 +609,7 @@ fun nuevaResena(
                                 )
                             }
                         }
+                    navController.navigate("MyPosts")
                 }
 
                 Log.d("Verificar", "$query  y ${inputTextCita.value.text}")
@@ -905,21 +906,24 @@ fun nuevaCita(
                                             )
                                         )
                                     }
-                                    dbf.collection("citas").document(inputTextCita.value.text).get()
+                                    dbf.collection("citas").whereEqualTo("texto", inputTextCita.value.text).get()
                                         .addOnCompleteListener { cita ->
                                             if (cita.isSuccessful) {
-                                                if (!cita.getResult().exists()) {
+                                                if (cita.getResult().size() == 0) {
                                                     dbf.collection("citas")
-                                                        .document(inputTextCita.value.text).set(
+                                                        .document().set(
                                                             hashMapOf(
                                                                 "texto" to inputTextCita.value.text,
                                                                 "libro" to query.replace('/','-'),
                                                                 "autor" to author,
-                                                                "book_id" to bookId
+                                                                "book_id" to bookId,
+                                                                "autor_email" to email,
+                                                                "autor_username" to username,
+                                                                "autor_tag" to tag
                                                             )
                                                         )
                                                 }
-                                                dbf.collection("comentarios").document().set(
+                                                dbf.collection("comentariosCita").document().set(
                                                     hashMapOf(
                                                         "texto" to inputTextCita.value.text,
                                                         "libro" to query.replace('/','-'),
@@ -935,7 +939,9 @@ fun nuevaCita(
                                         }
                                 }
                             }
+                        navController.navigate("MyPosts")
                     }
+
                 },
                 modifier = Modifier
                     .width(220.dp)

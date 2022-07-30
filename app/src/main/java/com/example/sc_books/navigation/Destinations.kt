@@ -15,4 +15,8 @@ sealed class Destinations(
     object NuevoPost: Destinations("Nuevopost", "Publicar", Icons.Filled.AddCircle)
     object MyPosts: Destinations("MyPosts", "Biblioteca", Icons.Filled.LibraryBooks)
     object Favoritos: Destinations("Favoritos", "Favoritos", Icons.Filled.Favorite)
+
+    object InfoLibro: Destinations("libro_resena_cita/?newText={newText}", "Información", Icons.Filled.Info){
+        fun createRoute(newText: String) = "libro_resena_cita/?newText=$newText"
+    }
 }

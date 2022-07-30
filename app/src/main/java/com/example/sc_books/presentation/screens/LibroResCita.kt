@@ -1,7 +1,5 @@
 package com.example.sc_books.presentation.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -19,7 +17,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,16 +26,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.sc_books.R
+import com.example.sc_books.datastore.Preferencias
 import com.example.sc_books.firebase.models.Review
 import com.example.sc_books.ui.theme.*
 import com.example.sc_books.viewmodels.BookViewModel
@@ -46,12 +42,13 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun LibroResCita(navController: NavHostController) {
+fun LibroResCita(book_id: String, navController: NavHostController) {
 
     val tabItems = listOf("Libro","Reseñas", "Cita")
     val pagerState = rememberPagerState()
@@ -168,7 +165,7 @@ fun LibroResCita(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ){
-                    PerfilLibro(navController=navController, bookId="z2hczgEACAAJ")
+                    PerfilLibro(navController=navController, bookId=book_id)
                 }
 
             }
@@ -182,7 +179,7 @@ fun LibroResCita(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ){
-                    Resenas(navController)
+                    Resenas(navController, bookId=book_id)
                 }
             }
             else{
@@ -193,7 +190,7 @@ fun LibroResCita(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ){
-                    Citas(navController)
+                    Citas(navController, bookId=book_id)
                 }
             }
 
@@ -223,7 +220,7 @@ fun PerfilLibro(
     }
 }
 @Composable
-fun Resenas(navController: NavHostController ) {
+fun Resenas(navController: NavHostController, bookId: String) {
     var resenas = listOf(
         Review("1","nombre Imagen","@UsuarioLec","Reseña",1,"Mismo nombre de libro","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....","direccionImagenLibro"),
         Review("1","nombre Imagen","@UsuarioLec123","Reseña",1,"Mismo nombre de libro","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida .....","direccionImagenLibro"),
@@ -234,33 +231,74 @@ fun Resenas(navController: NavHostController ) {
 
         )
 
+    var listado = remember { mutableListOf<Resenia>() }
+    var mostrar = remember { mutableStateOf(false) }
+    var cont = remember { mutableStateOf(0) }
+
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val tag = dataStore.getTag.collectAsState(initial = "").value
+
     var index = 0
     val listStateR = rememberLazyListState()
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth(),
-        state = listStateR
-    ) {
-        items(resenas) {
-                resena ->
-            if (resena != null) {
-                ResenaCard(resena, index, navController)
-                index += 1
+
+    if (tag!= ""){
+        dbf.collection("resenias").whereEqualTo("book_id", bookId).get()
+            .addOnSuccessListener {
+                //var cont = 0;
+                if (listado.size < it.size()) {
+                    for (resen in it) {
+
+                        listado.add(
+                            cont.value, Resenia(
+                                resen.data?.get("autor_email").toString(),
+                                resen.data?.get("autor_tag").toString(),
+                                resen.data?.get("autor_username").toString(),
+                                resen.data?.get("libro").toString(),
+                                resen.data?.get("resenia").toString(),
+                                resen.data?.get("book_id").toString(),
+                                resen.id,
+                                tag,
+                                "Reseña"
+                            )
+                        )
+                        cont.value++
+
+                    }
+                    mostrar.value = true
+                }
+                mostrar.value = true
+
             }
+    }
+    if (mostrar.value) {
 
-            Divider(
-                color = bordePerfil,
-                thickness = 5.dp,
-                modifier = Modifier.fillMaxWidth()
-            )
-
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth(),
+            state = listStateR
+        ) {
+            items(listado) { doc ->
+                if (doc != null) {
+                    ResenaCard(doc, index, navController, "Resena")
+                    index += 1
+                }
+                Divider(
+                    color = bordePerfil,
+                    thickness = 5.dp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
 
 
 @Composable
-fun Citas(navController: NavHostController ) {
+fun Citas(navController: NavHostController, bookId: String ) {
     var citas = listOf(
         Review("1","nombre Imagen","@UsuarioLec","Cita",1,"Mismo nombre de libro","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....","direccionImagenLibro"),
         Review("1","nombre Imagen","@UsuarioLec123","Cita",1,"Mismo nombre de libro","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida .....","direccionImagenLibro"),
@@ -271,41 +309,89 @@ fun Citas(navController: NavHostController ) {
 
         )
 
+    var listado = remember { mutableListOf<Resenia>() }
+    var mostrar = remember { mutableStateOf(false) }
+    var cont = remember { mutableStateOf(0) }
+
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val tag = dataStore.getTag.collectAsState(initial = "").value
+
     var index = 0
     val listStateR = rememberLazyListState()
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth(),
-        state = listStateR
-    ) {
-        items(citas) {
-                cita ->
-            if (cita != null) {
-                ResenaCard(cita, index, navController)
-                index += 1
+
+    if (tag!= ""){
+        dbf.collection("citas").whereEqualTo("book_id", bookId).get()
+            .addOnSuccessListener {
+                //var cont = 0;
+                if (listado.size < it.size()) {
+                    for (cita in it) {
+
+                        listado.add(
+                            cont.value, Resenia(
+                                cita.data?.get("autor_email").toString(),
+                                cita.data?.get("autor_tag").toString(),
+                                cita.data?.get("autor_username").toString(),
+                                cita.data?.get("libro").toString(),
+                                cita.data?.get("texto").toString(),
+                                cita.data?.get("book_id").toString(),
+                                cita.id,
+                                tag,
+                                "Cita"
+                            )
+                        )
+                        cont.value++
+
+                    }
+                    mostrar.value = true
+                }
+                mostrar.value = true
+
             }
+    }
+    if (mostrar.value) {
 
-            Divider(
-                color = bordePerfil,
-                thickness = 5.dp,
-                modifier = Modifier.fillMaxWidth()
-            )
-
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth(),
+            state = listStateR
+        ) {
+            items(listado) { doc ->
+                if (doc != null) {
+                    ResenaCard(doc, index, navController, "Cita")
+                    index += 1
+                }
+                Divider(
+                    color = bordePerfil,
+                    thickness = 5.dp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
-
-
-
 }
+
+
 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ResenaCard (review: Review, index: Int, navController: NavHostController) {
+fun ResenaCard (review: Resenia, index: Int, navController: NavHostController, tipo: String) {
     var isFavorite by remember { mutableStateOf(false) }
     val gson = Gson()
     var expandedState by remember { mutableStateOf(false) }
     val linesState by animateIntAsState(targetValue = if (expandedState) Int.MAX_VALUE else 3)
+
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val tag = dataStore.getTag.collectAsState(initial = "").value
+    val email = dataStore.getEmail.collectAsState(initial = "").value
 
     val rotationState by animateFloatAsState(
         targetValue = if (expandedState) 90f else 0f
@@ -381,7 +467,7 @@ fun ResenaCard (review: Review, index: Int, navController: NavHostController) {
                         ) {
                             Column {
                                 Text(
-                                    text = review.user_name,
+                                    text = review.autor_username,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     fontSize = 16.sp,
@@ -389,7 +475,7 @@ fun ResenaCard (review: Review, index: Int, navController: NavHostController) {
                                     color = getTextColor(index)
                                 )
                                 Text(
-                                    text = review.review_type_name,
+                                    text = review.tipo,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     fontSize = 14.sp,
@@ -416,12 +502,12 @@ fun ResenaCard (review: Review, index: Int, navController: NavHostController) {
             }
 
             Text(
-                text = "#"+ review.book_name,
+                text = "#"+ review.libro,
                 color= LB50_900
             )
 
             Text(
-                text= review.review_content,
+                text= review.textoContenido,
                 maxLines = if(expandedState) Int.MAX_VALUE else 3,
 
 
@@ -441,7 +527,13 @@ fun ResenaCard (review: Review, index: Int, navController: NavHostController) {
                 textDecoration = TextDecoration.Underline
             )
 
-
+            val corazon = remember{ mutableStateOf(false)}
+            dbf.collection("favoritos$tipo").document(review.tag_user+review.id).get()
+                .addOnCompleteListener{
+                    if (it.isSuccessful){
+                        corazon.value = it.getResult().exists()
+                    }
+                }
 
 
             Row(modifier=Modifier
@@ -465,11 +557,22 @@ fun ResenaCard (review: Review, index: Int, navController: NavHostController) {
                             modifier = Modifier
                                 .width(28.dp)
                                 .clickable {
-                                    isFavorite = !isFavorite
-
-
+                                    if (!corazon.value){
+                                        dbf.collection("favoritos$tipo").document(tag+review.id).set(
+                                            hashMapOf(
+                                                "favorito" to true,
+                                                "tag" to tag,
+                                                "reviewId" to review.id
+                                            )
+                                        )
+                                    }
+                                    else{
+                                        //Toast.makeText(context,email,Toast.LENGTH_SHORT).show()
+                                        dbf.collection("favoritos$tipo").document(tag+review.id).delete()
+                                    }
+                                    corazon.value = !corazon.value
                                 },
-                            tint = getTextColorFav(isFavorite),
+                            tint = getTextColorFav(corazon.value),
 
                             )
 
@@ -556,14 +659,4 @@ fun ResenaCard (review: Review, index: Int, navController: NavHostController) {
     }
 
 
-}
-
-
-@Preview
-@Composable
-fun  PreviewComents(){
-    SCBooksTheme {
-        LibroResCita(navController = NavHostController(
-            LocalContext.current))
-    }
 }
