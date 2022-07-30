@@ -24,7 +24,7 @@ import com.example.sc_books.navigation.Destinations
 import com.example.sc_books.presentation.LoginScreen
 import com.example.sc_books.ui.theme.CustomViolet
 import com.example.sc_books.ui.theme.Purple500
-import com.google.firebase.auth.FirebaseAuth
+//import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 
@@ -68,7 +68,7 @@ fun TopFBar(
                         dataStore.saveTag("")
                         openLogin.value = !openLogin.value
                     }
-                    FirebaseAuth.getInstance().signOut()
+                    /*FirebaseAuth.getInstance().signOut()*/
                 }
                 ) {
                     Icon(Icons.Default.Logout, "Salir")

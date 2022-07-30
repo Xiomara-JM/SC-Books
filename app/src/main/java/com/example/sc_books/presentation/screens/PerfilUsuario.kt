@@ -31,7 +31,6 @@ import com.example.sc_books.ui.theme.Purple700
 import com.google.android.gms.tasks.Task
 
 
-@OptIn(ExperimentalComposeUiApi::class)
 @RequiresApi(Build.VERSION_CODES.M)
 @Composable
 fun PerfilUsuario(navController: NavHostController) {
@@ -50,7 +49,8 @@ fun PerfilUsuario(navController: NavHostController) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 50.dp),
+                        .fillMaxHeight(0.7f)
+                        .padding(top = 70.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -107,7 +107,15 @@ fun PerfilUsuario(navController: NavHostController) {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 15.dp)
+                            .padding(bottom = 30.dp),
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = Color.White,
+                            focusedLabelColor = Purple700,
+                            //textColor = headingColor,
+                            unfocusedLabelColor = Purple700,
+                            unfocusedIndicatorColor = Purple700,
+                            focusedIndicatorColor = Purple700
+                        ),
                     )
                     /*val inputPhoneState =
                         remember { mutableStateOf(TextFieldValue("ejemplo@unsa.edu")) }

@@ -66,64 +66,60 @@ fun Sugerencias(navController: NavHostController){
         Review("1","nombre Imagen","@LikeLibros","Reseña",1,"Alicia en el Pais de las Maravillas","Realmente me parece una historia fascinante, desde una perspectiva fantastica y muy divertida. En lo particulas me encanto en personaje de  el gato , ya que me parece un personaje muy interesante y sospechoso .....","direccionImagenLibro"),
 
     )
-    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colors.background)
+            .padding(top = 24.dp, start = 24.dp, end = 24.dp)
+        ,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "¡¡ Que bueno tenerte por aquí",
+            fontWeight = FontWeight.Bold,
+            color = if (isSystemInDarkTheme()) Color.Black else Color.Black,
+            textAlign = TextAlign.Center,
+            fontSize = 24.sp,
+            modifier = Modifier.width(260.dp)
+        )
+        Text(
+            text = "@nombreDeUsuario !!", //purse.name
+            fontWeight = FontWeight.Bold,
+            color = if (isSystemInDarkTheme()) MaterialTheme.colors.primaryVariant else MaterialTheme.colors.primaryVariant,
+            textAlign = TextAlign.Center,
+            fontSize = 24.sp,
+            modifier = Modifier.width(260.dp)
+        )
 
 
-        Column(
+        var index = 0
+        val listState = rememberLazyListState()
+
+        /* when (depositViewModel.loadingSpinner.value) {
+        true -> CircularProgressIndicator()
+        false -> Unit
+    } */
+
+        LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background)
-                .padding(top = 24.dp, start = 24.dp, end = 24.dp)
-
-            ,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth(),
+            state = listState
         ) {
-            Text(
-                text = "¡¡ Que bueno tenerte por aquí",
-                fontWeight = FontWeight.Bold,
-                color = if (isSystemInDarkTheme()) Color.White else Color.Black,
-                textAlign = TextAlign.Center,
-                fontSize = 24.sp,
-                modifier = Modifier.width(260.dp)
-            )
-            Text(
-                text = "@nombreDeUsuario !!", //purse.name
-                fontWeight = FontWeight.Bold,
-                color = if (isSystemInDarkTheme()) Color.White else MaterialTheme.colors.primaryVariant,
-                textAlign = TextAlign.Center,
-                fontSize = 24.sp,
-                modifier = Modifier.width(260.dp)
-            )
-
-
-            var index = 0
-            val listState = rememberLazyListState()
-
-            /* when (depositViewModel.loadingSpinner.value) {
-            true -> CircularProgressIndicator()
-            false -> Unit
-        } */
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                state = listState
-            ) {
-                items(postsSugerenciasList) { deposit ->
-                    if (deposit != null) {
-                        PurseCard(deposit, index, navController)
-                        index += 1
-                    }
-
-                    Divider(
-                        color = bordePerfil,
-                        thickness = 5.dp,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+            items(postsSugerenciasList) { deposit ->
+                if (deposit != null) {
+                    PurseCard(deposit, index, navController)
+                    index += 1
                 }
-            }
 
+                Divider(
+                    color = bordePerfil,
+                    thickness = 5.dp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
+
+    }
 
 }
 
@@ -309,15 +305,10 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                     Row {
                             Icon(
                                 Icons.Filled.Favorite,
-
                                 contentDescription = "",
-
-
                                 modifier = Modifier.width(28.dp)
                                     .clickable {
                                         isFavorite=!isFavorite
-
-
                                     },
                                 tint = getTextColorFav(isFavorite),
 
@@ -347,7 +338,6 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                 Card (
                     elevation = 0.dp,
                     onClick = {
-
                         navController.navigate("comentarios_posts") {
                             navController.graph.startDestinationRoute?.let { screen_route ->
                                 popUpTo(screen_route) {
@@ -366,7 +356,6 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                     Row {
                         Icon(
                             painterResource(id = R.drawable.ic_baseline_comment_24),
-
                             contentDescription = "",
                             modifier = Modifier.width(28.dp),
                             tint = Color.Black
@@ -396,7 +385,6 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                 Card (
                     elevation = 0.dp,
                     onClick = {
-
                         navController.navigate("libro_resena_cita") {
                             navController.graph.startDestinationRoute?.let { screen_route ->
                                 popUpTo(screen_route) {
@@ -407,9 +395,6 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                             restoreState = true
                         }
                     }
-
-
-
                 ) {
 
                     Row {
@@ -442,14 +427,9 @@ fun PurseCard(review: Review, index: Int, navController: NavHostController) {
                     }
                 }
             }
-
-
-
-
         }
 
     }
-
 
 }
 /*

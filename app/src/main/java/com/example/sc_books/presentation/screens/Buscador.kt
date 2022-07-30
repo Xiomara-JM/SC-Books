@@ -51,6 +51,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.update
 
 
@@ -58,7 +59,8 @@ import kotlinx.coroutines.flow.update
 @Composable
 fun Buscador(
     ViewModel: BookViewModel,
-    searchViewModel: SearchViewModel
+    searchViewModel: SearchViewModel,
+    navController: NavHostController
 ){
     val readonly by remember {
         mutableStateOf(true)
@@ -75,7 +77,7 @@ fun Buscador(
             /*bottomBar = { BottomBar(navHostController) }*/
         ){
             Column(modifier = Modifier.padding(it)) {
-                DisplayResults(ViewModel, readonly)
+                DisplayResults(ViewModel, readonly, navController)
             }
         }
     }
@@ -86,7 +88,7 @@ fun Buscador(
 @Composable
 fun SearchView(
     viewModel: BookViewModel = hiltViewModel(),
-    searchViewModel: SearchViewModel
+    searchViewModel: SearchViewModel,
 ){
     val focusManager= LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -241,7 +243,8 @@ fun SearchView(
 @Composable
 fun DisplayResults(
     ViewModel: BookViewModel,
-    readonly: Boolean
+    readonly: Boolean,
+    navController: NavHostController
 ) {
     val state = rememberLazyListState()
     val bookList by ViewModel.bookList.collectAsState(initial = null)
@@ -254,7 +257,7 @@ fun DisplayResults(
                 state = state,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                items(items) { item -> SearchResults(item, ViewModel, readonly) }
+                items(items) { item -> SearchResults(item, ViewModel, readonly, navController) }
             }
         }
         if ((retroState is RetroState.Success && bookList?.items.isNullOrEmpty()) || isError) {
@@ -278,7 +281,8 @@ fun DisplayResults(
 fun SearchResults(
     item: Item,
     ViewModel: BookViewModel,
-    readonly: Boolean
+    readonly: Boolean,
+    navController: NavHostController
 ) {
     /*val itemId by ViewModel.Itemid.collectAsState(initial = "")*/
     Surface(
@@ -286,10 +290,22 @@ fun SearchResults(
             .fillMaxWidth()
             .clickable(
                 onClick = {
-                    if(!readonly){
+                    if (readonly) {
+                        ViewModel.getBook(item.id)
+                        navController.navigate("VistaLibroDetalle") {
+                            navController.graph.startDestinationRoute?.let { screen_route ->
+                                popUpTo(screen_route) {
+                                    saveState = true
+                                }
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                        /*navHostController.navigate(route = BookNavScreens.DetailView.withArgs(item.id))*/
+                    } else {
                         ViewModel.itemId.value = item.id
                     }
-                    /*navHostController.navigate(route = BookNavScreens.DetailView.withArgs(item.id))*/
+
                 }
             )
             .padding(
