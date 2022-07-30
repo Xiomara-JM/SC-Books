@@ -61,6 +61,10 @@ fun NavigationHost(
             PerfilUsuario(navController)
         }
 
+        composable("libro_resena_cita") {
+            LibroResCita(navController)
+        }
+
     }
 }
 
