@@ -1,6 +1,21 @@
 package com.example.sc_books.presentation.screens
 
 import android.content.Intent
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
+import androidx.compose.animation.Animatable
+
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
@@ -42,10 +57,41 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+
 import com.example.sc_books.presentation.MainActivity
 import com.example.sc_books.presentation.screens.Buscador
 import com.example.sc_books.ui.theme.*
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.ExposedDropdownMenuBox
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
+import com.example.sc_books.datastore.Preferencias
+import com.example.sc_books.presentation.LoginForm
+import com.example.sc_books.presentation.SignUpForm
+import com.example.sc_books.presentation.showAlert
+import com.example.sc_books.ui.theme.*
+
 import com.example.sc_books.viewmodels.BookViewModel
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.pagerTabIndicatorOffset
+import com.google.accompanist.pager.rememberPagerState
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import java.io.IOException
 
 
 @Composable
@@ -71,6 +117,7 @@ fun NuevoPost(
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PopupWindowDialog(navController: NavHostController) {
     var openDialog = remember { mutableStateOf(true)}
@@ -78,7 +125,106 @@ fun PopupWindowDialog(navController: NavHostController) {
     var openCitaGaleria = remember { mutableStateOf(false)}
     var openCitaCamara = remember { mutableStateOf(false)}
 
-    Column(
+    val tabItems = listOf("Nueva reseña", "Nueva Cita")
+    val pagerState = rememberPagerState()
+    val coroutineScope = rememberCoroutineScope()
+
+
+    Column {
+        TabRow(
+            selectedTabIndex = pagerState.currentPage,
+            backgroundColor = Purple500,
+            modifier = Modifier
+                .padding(5.dp)
+                .background(Color.Transparent)
+                .clip(RoundedCornerShape(30.dp)),
+            indicator = { tabPositions ->
+                TabRowDefaults.Indicator(
+                    modifier = Modifier
+                        .pagerTabIndicatorOffset(
+                            pagerState, tabPositions
+                        )
+                        .width(0.dp)
+                        .height(0.dp)
+                )
+            }
+        ) {
+            tabItems.forEachIndexed { index, title ->
+                val color = remember { Animatable(Purple700) }
+                LaunchedEffect(pagerState.currentPage == index) {
+                    color.animateTo(
+                        if (pagerState.currentPage == index)
+                            Color.White else Purple500
+                    )
+                }
+
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    text = {
+                        Text(
+                            text = title,
+                            style = if (pagerState.currentPage == index) {
+                                TextStyle(
+                                    color = Purple700,
+                                    fontSize = 18.sp
+                                )
+                            } else {
+                                TextStyle(
+                                    color = Purple700,
+                                    fontSize = 16.sp
+                                )
+                            }
+                        )
+                    },
+                    modifier = Modifier.background(
+                        color = color.value,
+                        shape = RoundedCornerShape(30.dp)
+                    )
+                )
+            }
+        }
+        HorizontalPager(
+            count = tabItems.size,
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Purple200)
+        ) { page ->
+            if (page == 0){
+                Column (
+                    modifier = Modifier
+                        //.fillMaxSize()
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.SpaceAround,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    nuevaResena()
+                }
+
+            }
+            else{
+                Column (
+                    modifier = Modifier
+                        //.fillMaxSize()
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.SpaceAround,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    nuevaCita(hiltViewModel())
+                }
+            }
+
+        }
+    }
+
+
+
+    /*Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp),
@@ -159,146 +305,10 @@ fun PopupWindowDialog(navController: NavHostController) {
             }
             if(openCitaGaleria.value)
             {
-                citaGaleria()
-            }
-            if(openCitaCamara.value)
-            {
-                citaCamara()
+                nuevaCita()
             }
         }
-    }
-}
-
-@Composable
-fun searchView(
-    viewModel: BookViewModel = hiltViewModel()
-){
-    /*val keyboardController = LocalSoftwareKeyboardController.current,*/
-    val txtFieldError = remember { mutableStateOf("") }
-    var showDialog by remember { mutableStateOf(false) }
-    val (query, onValueChange) = remember { mutableStateOf("") }
-    val (author, setAuthor) = remember { mutableStateOf("") }
-    /*var authors by remember { mutableStateOf("") }
-    Text(
-        text = "by $authors",
-        style = MaterialTheme.typography.caption,
-        modifier = Modifier
-            .padding(top = 5.dp)
-    )*/
-
-    if(showDialog){
-        if(query == ""){
-
-        }else{
-            viewModel.getBooks(query)
-            MyDialog(onClose= {showDialog=false}, viewModel)
-        }
-    }
-
-    val bookId by viewModel.itemId.collectAsState("")
-    viewModel.getBook(bookId)
-    val book by viewModel.clickedBook.collectAsState(initial = null)
-    if(!showDialog){
-        LaunchedEffect(bookId){
-            book?.let { it ->
-                onValueChange(it.volumeInfo.title)
-                setAuthor(
-                    if (it.volumeInfo.authors != null){
-                        it.volumeInfo.authors.joinToString(",")
-                    } else ("")
-                )
-            }
-        }
-        viewModel.resetAll()
-    }
-
-    Row(modifier = Modifier.fillMaxWidth()){
-        TextField(
-            value = query,
-            onValueChange = onValueChange,
-            textStyle = TextStyle(fontSize = 14.sp),
-            colors = TextFieldDefaults.textFieldColors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                backgroundColor = Color.Transparent,
-                cursorColor = Color.DarkGray
-            ),
-            modifier = Modifier
-                .fillMaxWidth(0.78f)
-                /*.border(
-                    BorderStroke(
-                        width = 2.dp,
-                        color = colorResource(
-                            id = if (txtFieldError.value.isEmpty()) android.R.color.holo_green_light
-                                else android.R.color.holo_red_dark
-                        )
-                    ),
-                    shape = RoundedCornerShape(50)
-                )*/
-                .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
-            keyboardOptions = KeyboardOptions (
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done
-            ),
-            singleLine = true,
-            /*keyboardActions = KeyboardActions(onSearch = {
-                searchBook()
-            })*/
-        )
-        Button(
-            onClick = {
-                if (query.isEmpty()) {
-                    showDialog=false
-                    txtFieldError.value = "Campo obligatorio"
-                    return@Button
-                }else{
-                    showDialog=true
-                }
-                /*onValueChange(query)*/
-            },
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = Purple700),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(55.dp)
-                .padding(start = 7.dp),
-        ){
-            Icon(
-                imageVector = Icons.Filled.Search,
-                contentDescription = "Localized description",
-                tint = Color.White
-            )
-        }
-    }
-    Spacer(modifier = Modifier.height(15.dp))
-    Text(
-        text = "Autor del libro",
-        fontSize = 14.sp
-    )
-    TextField(
-        value = author,
-        onValueChange = setAuthor,
-        textStyle = TextStyle(fontSize = 14.sp),
-        colors = TextFieldDefaults.textFieldColors(
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            backgroundColor = Color.Transparent,
-            cursorColor = Color.DarkGray
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
-        keyboardOptions = KeyboardOptions (
-            keyboardType = KeyboardType.Text,
-            imeAction = ImeAction.Done
-        ),
-        singleLine = true,
-        /*keyboardActions = KeyboardActions(onSearch = {
-            searchBook()
-        })*/
-    )
-
+    }*/
 }
 
 @Composable
@@ -371,11 +381,21 @@ fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel){
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Preview
 @Composable
 fun nuevaResena(
     viewModel: BookViewModel = hiltViewModel()
 ) {
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val email = dataStore.getEmail.collectAsState(initial = "").value
+    val username = dataStore.getNombre.collectAsState(initial = "").value
+    val tag = dataStore.getTag.collectAsState(initial = "").value
+
     Column(
         modifier = Modifier
             .padding(10.dp)
@@ -399,7 +419,129 @@ fun nuevaResena(
             text = "Escribe el título del libro",
             fontSize = 14.sp
         )
-        searchView(viewModel)
+
+        val txtFieldError = remember { mutableStateOf("") }
+        var showDialog by remember { mutableStateOf(false) }
+        val (query, onValueChange) = remember { mutableStateOf("") }
+        val (author, setAuthor) = remember { mutableStateOf("") }
+        val keyboardController = LocalSoftwareKeyboardController.current
+
+        if(showDialog){
+            if(query == ""){
+            }else{
+                Log.d("rawrwa",query)
+                viewModel.getBooks(query)
+                MyDialog(onClose= {showDialog=false}, viewModel)
+            }
+        }
+
+        val bookId by viewModel.itemId.collectAsState("")
+        viewModel.getBook(bookId)
+        val book by viewModel.clickedBook.collectAsState(initial = null)
+        if(!showDialog){
+            LaunchedEffect(bookId){
+                book?.let { it ->
+                    onValueChange(it.volumeInfo.title)
+                    setAuthor(
+                        if (it.volumeInfo.authors != null){
+                            it.volumeInfo.authors.joinToString(",")
+                        } else ("")
+                    )
+                }
+            }
+            /*viewModel.resetAll()*/
+        }
+
+        Row(modifier = Modifier.fillMaxWidth()){
+            TextField(
+                value = query,
+                onValueChange = onValueChange,
+                textStyle = TextStyle(fontSize = 14.sp),
+                colors = TextFieldDefaults.textFieldColors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    backgroundColor = Color.Transparent,
+                    cursorColor = Color.DarkGray
+                ),
+                modifier = Modifier
+                    .fillMaxWidth(0.78f)
+                    /*.border(
+                        BorderStroke(
+                            width = 2.dp,
+                            color = colorResource(
+                                id = if (txtFieldError.value.isEmpty()) android.R.color.holo_green_light
+                                    else android.R.color.holo_red_dark
+                            )
+                        ),
+                        shape = RoundedCornerShape(50)
+                    )*/
+                    .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
+                keyboardOptions = KeyboardOptions (
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onSearch = {
+                    keyboardController?.hide()
+                }),
+                singleLine = true,
+                /*keyboardActions = KeyboardActions(onSearch = {
+
+                })*/
+            )
+            Button(
+                onClick = {
+                    if (query.isEmpty()) {
+                        showDialog=false
+                        txtFieldError.value = "Campo obligatorio"
+                        return@Button
+                    }else{
+                        showDialog=true
+                    }
+                    /*onValueChange(query)*/
+                },
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = Purple700),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(55.dp)
+                    .padding(start = 7.dp),
+            ){
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Localized description",
+                    tint = Color.White
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(15.dp))
+        Text(
+            text = "Autor del libro",
+            fontSize = 14.sp
+        )
+        TextField(
+            value = author,
+            onValueChange = setAuthor,
+            textStyle = TextStyle(fontSize = 14.sp),
+            colors = TextFieldDefaults.textFieldColors(
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                backgroundColor = Color.Transparent,
+                cursorColor = Color.DarkGray
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
+            keyboardOptions = KeyboardOptions (
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done
+            ),
+            singleLine = true,
+            /*keyboardActions = KeyboardActions(onSearch = {
+                searchBook()
+            })*/
+        )
+
 
         Spacer(modifier = Modifier.height(10.dp))
         Text(
@@ -427,7 +569,35 @@ fun nuevaResena(
         Spacer(modifier = Modifier.height(15.dp))
         Button(
             onClick = {
-                //mContext.startActivity(Intent(mContext, MainActivity::class.java))
+                if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty()) {
+                    showAlert(context, 1)
+                }
+                else {
+                    dbf.collection("libros").document(query).get()
+                        .addOnCompleteListener{
+                            if (it.isSuccessful){
+                                if (!it.getResult().exists()){
+                                    dbf.collection("libros").document(query).set(
+                                        hashMapOf(
+                                            "nombre" to query,
+                                            "info" to "información del libro"
+                                        )
+                                    )
+                                }
+                                dbf.collection("resenias").document().set(
+                                    hashMapOf(
+                                        "libro" to query,
+                                        "resenia" to inputTextCita.value.text,
+                                        "autor_email" to email,
+                                        "autor_username" to username,
+                                        "autor_tag" to tag
+                                    )
+                                )
+                            }
+                        }
+                }
+
+                Log.d("Verificar", "$query  y ${inputTextCita.value.text}")
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = Purple700,
@@ -445,13 +615,27 @@ fun nuevaResena(
 }
 
 @Composable
-fun citaGaleria(
-    viewModel: BookViewModel = hiltViewModel()
+fun nuevaCita(
+    viewModel: BookViewModel
 ) {
+    //DataStore
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = Preferencias(context)
+    val dbf = FirebaseFirestore.getInstance()
+    val email = dataStore.getEmail.collectAsState(initial = "").value
+    val username = dataStore.getNombre.collectAsState(initial = "").value
+    val tag = dataStore.getTag.collectAsState(initial = "").value
+
+    var imagenBitmap by rememberSaveable{ mutableStateOf<Bitmap?>(null)}
+    var imagenUri by rememberSaveable{ mutableStateOf<Uri?>(null)}
+    var escaneo by rememberSaveable{mutableStateOf("")}
+    var inputTextCita = remember{ mutableStateOf(TextFieldValue()) }
+
     val scrollState = rememberScrollState()
     Column (
         modifier = Modifier.padding(bottom = 30.dp)
-            ){
+    ){
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -479,7 +663,124 @@ fun citaGaleria(
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
             )*/
-            searchView(viewModel)
+
+            val txtFieldError = remember { mutableStateOf("") }
+            var showDialog by remember { mutableStateOf(false) }
+            val (query, onValueChange) = remember { mutableStateOf("") }
+            val (author, setAuthor) = remember { mutableStateOf("") }
+
+            if(showDialog){
+                if(query == ""){
+                }else{
+                    viewModel.getBooks(query)
+                    MyDialog(onClose= {showDialog=false}, viewModel)
+                }
+            }
+
+            val bookId by viewModel.itemId.collectAsState("")
+            viewModel.getBook(bookId)
+            val book by viewModel.clickedBook.collectAsState(initial = null)
+            if(!showDialog){
+                LaunchedEffect(bookId){
+                    book?.let { it ->
+                        onValueChange(it.volumeInfo.title)
+                        setAuthor(
+                            if (it.volumeInfo.authors != null){
+                                it.volumeInfo.authors.joinToString(",")
+                            } else ("")
+                        )
+                    }
+                }
+                viewModel.resetAll()
+            }
+
+            Row(modifier = Modifier.fillMaxWidth()){
+                TextField(
+                    value = query,
+                    onValueChange = onValueChange,
+                    textStyle = TextStyle(fontSize = 14.sp),
+                    colors = TextFieldDefaults.textFieldColors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        backgroundColor = Color.Transparent,
+                        cursorColor = Color.DarkGray
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth(0.78f)
+                        /*.border(
+                            BorderStroke(
+                                width = 2.dp,
+                                color = colorResource(
+                                    id = if (txtFieldError.value.isEmpty()) android.R.color.holo_green_light
+                                        else android.R.color.holo_red_dark
+                                )
+                            ),
+                            shape = RoundedCornerShape(50)
+                        )*/
+                        .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
+                    keyboardOptions = KeyboardOptions (
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
+                    singleLine = true,
+                    /*keyboardActions = KeyboardActions(onSearch = {
+                        searchBook()
+                    })*/
+                )
+                Button(
+                    onClick = {
+                        if (query.isEmpty()) {
+                            showDialog=false
+                            txtFieldError.value = "Campo obligatorio"
+                            return@Button
+                        }else{
+                            showDialog=true
+                        }
+                        /*onValueChange(query)*/
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = Purple700),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp)
+                        .padding(start = 7.dp),
+                ){
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = "Localized description",
+                        tint = Color.White
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(15.dp))
+            Text(
+                text = "Autor del libro",
+                fontSize = 14.sp
+            )
+            TextField(
+                value = author,
+                onValueChange = setAuthor,
+                textStyle = TextStyle(fontSize = 14.sp),
+                colors = TextFieldDefaults.textFieldColors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    backgroundColor = Color.Transparent,
+                    cursorColor = Color.DarkGray
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
+                keyboardOptions = KeyboardOptions (
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                singleLine = true,
+                /*keyboardActions = KeyboardActions(onSearch = {
+                    searchBook()
+                })*/
+            )
+
 
             Text(
                 text = "Subir fotografía desde galeria",
@@ -497,15 +798,16 @@ fun citaGaleria(
 
                 Icon(imageVector = Icons.Default.ImageSearch, contentDescription = null)
             }
-            Image(
+            TomarImagen(onImageCapture = {imagenBitmap = it}, onUriCapture = {imagenUri = it})
+            /*Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
-
                 contentDescription = null,
                 Modifier
                     .width(80.dp)
                     .padding(bottom = 32.dp, top = 32.dp),
                 alignment = Alignment.Center,
-            )
+            )*/
+            EscanearImagen(imagenBitmap,  imagenUri, escribir = {inputTextCita.value = it})
             Text(
                 text = "Texto en claro (Cita)",
                 fontSize = 16.sp,
@@ -539,7 +841,7 @@ fun citaGaleria(
             )
             Button(
                 onClick = {
-                    //mContext.startActivity(Intent(mContext, MainActivity::class.java))
+                    Toast.makeText(context, "$email y $username y $tag", Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier
                     .width(220.dp)
@@ -547,10 +849,6 @@ fun citaGaleria(
             ) {
                 Text(text = "Subir Post de Cita")
             }
-
-
-
-
 
             /*val inputNameState = remember { mutableStateOf(TextFieldValue()) }
         TextField(
@@ -583,16 +881,180 @@ fun citaGaleria(
 }
 
 @Composable
-fun citaCamara() {
-    /*TextRead()*/
-    /*Column(
-        modifier = Modifier.padding(horizontal = 10.dp)
-    ) {
-        Text(
-            text = "Crear una Nueva Cita desde Cámara",
-            modifier = Modifier
-                .padding(vertical = 5.dp),
-            fontSize = 16.sp
-        )
-    }*/
+fun EscanearImagen(imagenBitmap: Bitmap?, imagenUri: Uri?, escribir: (TextFieldValue) -> Unit) {
+    val context = LocalContext.current
+    //val recognizer = remember(mutableStateOf(TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)))
+    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+    imagenBitmap?.let { btm ->
+        val image = InputImage.fromBitmap(btm, 0)
+
+        val result = recognizer.process(image)
+            .addOnSuccessListener { visionText ->
+                escribir(TextFieldValue(visionText.text))
+                //Log.d("Estado", visionText.text)
+                //Toast.makeText(context, "Ya se verificó! ${visionText.text} .", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Log.d("Estado", e.message.toString())
+                //Toast.makeText(context, "Aún no!", Toast.LENGTH_SHORT).show()
+            }
+    }
+    imagenUri?.let { uri ->
+        var btm by  remember {
+            mutableStateOf<Bitmap?>(null)
+        }
+        if (Build.VERSION.SDK_INT < 28) {
+            btm = MediaStore.Images
+                .Media.getBitmap(context.contentResolver,uri)
+
+        } else {
+            val source = ImageDecoder
+                .createSource(context.contentResolver,uri)
+            btm = ImageDecoder.decodeBitmap(source)
+        }
+
+        btm?.let {  bitmaImage ->
+            Image(
+                bitmap = bitmaImage.asImageBitmap(),
+                contentDescription =null,
+                modifier = Modifier.size(400.dp)
+            )
+        }
+
+        //val image = InputImage.fromBitmap(btm, 0)
+        val image: InputImage
+        try {
+            image = InputImage.fromFilePath(context, uri)
+            val result = recognizer.process(image)
+                .addOnSuccessListener { visionText ->
+                    escribir(TextFieldValue(visionText.text))
+                    //Log.d("Estado", visionText.text)
+                    //Toast.makeText(context, "Ya se verificó! ${visionText.text} .", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    Log.d("Estado", e.message.toString())
+                    //Toast.makeText(context, "Aún no!", Toast.LENGTH_SHORT).show()
+                }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+}
+
+
+@Composable
+fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit) {
+
+    var imageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+    val context = LocalContext.current
+    var bitmapDos by  remember {
+        mutableStateOf<Bitmap?>(null)
+    }
+
+    val camaraOn = remember{mutableStateOf(false)}
+    val galleryOn = remember { mutableStateOf(false)}
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri = uri
+        bitmapDos = null
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { btm: Bitmap? ->
+        imageUri = null
+        bitmapDos = btm
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            if (galleryOn.value){
+                galleryLauncher.launch("image/*")
+            }
+            if (camaraOn.value){
+                cameraLauncher.launch()
+            }
+            Toast.makeText(context, "Permiso concedido!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Permiso denegado!", Toast.LENGTH_SHORT).show()
+        }
+    }
+    Row() {
+        Button(onClick = {
+            camaraOn.value = true
+            galleryOn.value = false
+            when (PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.CAMERA
+                ) -> {
+                    cameraLauncher.launch()
+                }
+                else -> {
+                    permissionLauncher.launch(Manifest.permission.CAMERA)
+                }
+            }
+        }) {
+            Text(text = "Camara")
+        }
+
+        Button(onClick = {
+            camaraOn.value = false
+            galleryOn.value = true
+            when (PackageManager.PERMISSION_GRANTED) {
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.READ_EXTERNAL_STORAGE
+                ) -> {
+                    galleryLauncher.launch("image/*")
+                }
+                else -> {
+                    permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
+            }
+        }) {
+            Text(text = "Galeria")
+        }
+    }
+
+    if (galleryOn.value){
+        imageUri?.let {
+            if (Build.VERSION.SDK_INT < 28) {
+                bitmapDos = MediaStore.Images
+                    .Media.getBitmap(context.contentResolver,it)
+
+            } else {
+                val source = ImageDecoder
+                    .createSource(context.contentResolver,it)
+                bitmapDos = ImageDecoder.decodeBitmap(source)
+            }
+
+            onUriCapture(it)
+            onImageCapture(null)
+            bitmapDos?.let {  btm ->
+                Image(
+                    bitmap = btm.asImageBitmap(),
+                    contentDescription =null,
+                    modifier = Modifier.size(400.dp)
+                )
+            }
+        }
+    }
+
+    if (camaraOn.value) {
+        bitmapDos?.let { btm ->
+            Image(
+                bitmap = btm.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier.size(400.dp)
+            )
+            onImageCapture(btm)
+            onUriCapture(null)
+        }
+    }
 }

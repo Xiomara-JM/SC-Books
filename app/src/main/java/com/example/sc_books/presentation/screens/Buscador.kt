@@ -284,13 +284,14 @@ fun SearchResults(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = {
-                if(readonly){
-                }else{
-                    ViewModel.itemId.value = item.id
+            .clickable(
+                onClick = {
+                    if(!readonly){
+                        ViewModel.itemId.value = item.id
+                    }
+                    /*navHostController.navigate(route = BookNavScreens.DetailView.withArgs(item.id))*/
                 }
-                /*navHostController.navigate(route = BookNavScreens.DetailView.withArgs(item.id))*/
-            })
+            )
             .padding(
                 start = 16.dp,
                 top = 8.dp,
@@ -385,4 +386,7 @@ fun prueba(
     }
 }
 */
+
+
+
 
