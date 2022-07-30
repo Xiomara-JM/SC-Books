@@ -1,6 +1,6 @@
-
 package com.example.sc_books.presentation.screens
 
+import android.content.Intent
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
@@ -15,65 +15,75 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
 import androidx.compose.animation.Animatable
+
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+//import androidx.compose.foundation.layout.R
 import com.example.sc_books.R
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ImageSearch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextRange
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.sc_books.presentation.components.QuerySearch
+
+import com.example.sc_books.presentation.MainActivity
+import com.example.sc_books.presentation.screens.Buscador
+import com.example.sc_books.ui.theme.*
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import com.example.sc_books.datastore.Preferencias
 import com.example.sc_books.presentation.LoginForm
 import com.example.sc_books.presentation.SignUpForm
 import com.example.sc_books.presentation.showAlert
 import com.example.sc_books.ui.theme.*
-//import androidx.hilt.navigation.compose.hiltViewModel
+
 import com.example.sc_books.viewmodels.BookViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -81,7 +91,6 @@ import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-
 import java.io.IOException
 
 
@@ -206,7 +215,7 @@ fun PopupWindowDialog(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ){
-                    nuevaCita()
+                    nuevaCita(hiltViewModel())
                 }
             }
 
@@ -250,7 +259,7 @@ fun PopupWindowDialog(navController: NavHostController) {
                                         openDialog.value = !openDialog.value
                                         openNuevaResena.value = !openNuevaResena.value
                                     },
-                                fontSize = 16.sp,
+                                fontSize = 16.sp
                             )
                             Divider(modifier = Modifier.border(1.dp, LB50_900))
                             Text(
@@ -302,14 +311,82 @@ fun PopupWindowDialog(navController: NavHostController) {
     }*/
 }
 
+@Composable
+fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel){
+    var readOnly by remember { mutableStateOf(false) }
+
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(dismissOnClickOutside = false)
+    ){
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            modifier = Modifier.fillMaxHeight(0.85f)
+        ) {
+            Box(
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(11.dp, 5.dp, 10.dp, 0.dp)
+                ) {
+                    Text(
+                        text = "Seleccione un libro",
+                        style = TextStyle(
+                            fontSize = 18.sp,
+                            fontFamily = FontFamily.Default,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Cancel,
+                        contentDescription = "",
+                        tint = colorResource(android.R.color.darker_gray),
+                        modifier = Modifier
+                            .width(30.dp)
+                            .height(30.dp)
+                            .clickable(onClick = {
+                                viewModel.itemId.value=""
+                                onClose()
+                            })
+                    )
+                }
+                Box(modifier = Modifier.padding(15.dp, 35.dp, 15.dp, 60.dp)) {
+                    DisplayResults(viewModel, readOnly)
+                }
+            }
+            Box(
+                modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 10.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Button(
+                    onClick = onClose,
+                    shape = RoundedCornerShape(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = Purple700,
+                        contentColor = Color.White),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                ) {
+                    Text(text = "Aceptar")
+                }
+            }
+
+        }
+    }
+}
 
 @OptIn(ExperimentalComposeUiApi::class)
-@SuppressLint("UnrememberedMutableState")
+@Preview
 @Composable
 fun nuevaResena(
-
+    viewModel: BookViewModel = hiltViewModel()
 ) {
-
     //DataStore
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -318,29 +395,6 @@ fun nuevaResena(
     val email = dataStore.getEmail.collectAsState(initial = "").value
     val username = dataStore.getNombre.collectAsState(initial = "").value
     val tag = dataStore.getTag.collectAsState(initial = "").value
-
-    /*val dropDownOptions = mutableStateOf(listOf<String>())
-    val textFieldValue = mutableStateOf(TextFieldValue())
-    val dropDownExpanded = mutableStateOf(false)
-    val bookList by viewModel.bookList.collectAsState(initial = null)
-    val tittle = mutableStateOf(listOf<String>())
-
-    fun onDropdownDismissRequest() {
-        dropDownExpanded.value = false
-    }
-
-    fun onValueChanged(value: TextFieldValue) {
-        dropDownExpanded.value = true
-        textFieldValue.value = value
-        viewModel.getBooks(value.text)
-        bookList.let { viewModel }
-        *//*tittle.value = bookList?.items?.map { it -> it.volumeInfo.title } !!*//*
-        Log.d("dasdas", tittle.value.toString())
-        Log.d("dasdas", bookList.toString())
-        *//*dropDownOptions.value = tittle.value.filter{
-            it.startsWith(value.text) && it != value.text
-        }?.take(3)!!*//*
-    }*/
 
     Column(
         modifier = Modifier
@@ -351,10 +405,14 @@ fun nuevaResena(
             text = "Crear una Nueva Reseña",
             modifier = Modifier
                 .padding(15.dp)
-                .align(alignment = Alignment.CenterHorizontally),
-            fontSize = 16.sp,
+                .align(alignment = CenterHorizontally),
+            fontSize = 18.sp,
             textAlign = TextAlign.Center,
             color = Purple700,
+            style = TextStyle(
+                fontFamily = FontFamily.Default,
+                fontWeight = FontWeight.Bold
+            )
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
@@ -362,27 +420,109 @@ fun nuevaResena(
             fontSize = 14.sp
         )
 
-        /*QuerySearch(
-            modifier = Modifier.fillMaxWidth(),
-            value = textFieldValue.value,
-            setValue = ::onValueChanged,
-            onDismissRequest = ::onDropdownDismissRequest,
-            dropDownExpanded = dropDownExpanded.value,
-            list = dropDownOptions.value,
-            label = "Buscar un libro"
-        )*/
-        val keyboardController = LocalSoftwareKeyboardController.current
+        val txtFieldError = remember { mutableStateOf("") }
+        var showDialog by remember { mutableStateOf(false) }
         val (query, onValueChange) = remember { mutableStateOf("") }
-        TextField(
-            value = query,
-            onValueChange = onValueChange,
-            textStyle = TextStyle(fontSize = 14.sp),
-            leadingIcon = { Icon(Icons.Filled.Search, null, tint = Color.Gray) },
-            label = {
-                Text(text = "Buscar un libro",
-                    color = Purple200
+        val (author, setAuthor) = remember { mutableStateOf("") }
+        val keyboardController = LocalSoftwareKeyboardController.current
+
+        if(showDialog){
+            if(query == ""){
+            }else{
+                Log.d("rawrwa",query)
+                viewModel.getBooks(query)
+                MyDialog(onClose= {showDialog=false}, viewModel)
+            }
+        }
+
+        val bookId by viewModel.itemId.collectAsState("")
+        viewModel.getBook(bookId)
+        val book by viewModel.clickedBook.collectAsState(initial = null)
+        if(!showDialog){
+            LaunchedEffect(bookId){
+                book?.let { it ->
+                    onValueChange(it.volumeInfo.title)
+                    setAuthor(
+                        if (it.volumeInfo.authors != null){
+                            it.volumeInfo.authors.joinToString(",")
+                        } else ("")
+                    )
+                }
+            }
+            /*viewModel.resetAll()*/
+        }
+
+        Row(modifier = Modifier.fillMaxWidth()){
+            TextField(
+                value = query,
+                onValueChange = onValueChange,
+                textStyle = TextStyle(fontSize = 14.sp),
+                colors = TextFieldDefaults.textFieldColors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    backgroundColor = Color.Transparent,
+                    cursorColor = Color.DarkGray
+                ),
+                modifier = Modifier
+                    .fillMaxWidth(0.78f)
+                    /*.border(
+                        BorderStroke(
+                            width = 2.dp,
+                            color = colorResource(
+                                id = if (txtFieldError.value.isEmpty()) android.R.color.holo_green_light
+                                    else android.R.color.holo_red_dark
+                            )
+                        ),
+                        shape = RoundedCornerShape(50)
+                    )*/
+                    .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
+                keyboardOptions = KeyboardOptions (
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onSearch = {
+                    keyboardController?.hide()
+                }),
+                singleLine = true,
+                /*keyboardActions = KeyboardActions(onSearch = {
+
+                })*/
+            )
+            Button(
+                onClick = {
+                    if (query.isEmpty()) {
+                        showDialog=false
+                        txtFieldError.value = "Campo obligatorio"
+                        return@Button
+                    }else{
+                        showDialog=true
+                    }
+                    /*onValueChange(query)*/
+                },
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = Purple700),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(55.dp)
+                    .padding(start = 7.dp),
+            ){
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Localized description",
+                    tint = Color.White
                 )
-            },
+            }
+        }
+        Spacer(modifier = Modifier.height(15.dp))
+        Text(
+            text = "Autor del libro",
+            fontSize = 14.sp
+        )
+        TextField(
+            value = author,
+            onValueChange = setAuthor,
+            textStyle = TextStyle(fontSize = 14.sp),
             colors = TextFieldDefaults.textFieldColors(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
@@ -391,18 +531,18 @@ fun nuevaResena(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFE7F1F1), RoundedCornerShape(16.dp)),
-            placeholder = { Text(text = "Escriba su busqueda") },
-
+                .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
             keyboardOptions = KeyboardOptions (
                 keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Search
+                imeAction = ImeAction.Done
             ),
-            maxLines = 5,
-            keyboardActions = KeyboardActions(onSearch = {
-
-            })
+            singleLine = true,
+            /*keyboardActions = KeyboardActions(onSearch = {
+                searchBook()
+            })*/
         )
+
+
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = "Reseña del libro",
@@ -457,24 +597,27 @@ fun nuevaResena(
                         }
                 }
 
-                Log.d("Verificar", "$query y $onValueChange y ${inputTextCita.value.text}")
+                Log.d("Verificar", "$query  y ${inputTextCita.value.text}")
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = Purple700,
                 contentColor = Color.White),
+            shape = RoundedCornerShape(10.dp),
             modifier = Modifier
                 .padding(top = 9.dp)
-                .width(200.dp)
-                .align(alignment = Alignment.CenterHorizontally),
+                .fillMaxWidth(0.9f)
+                .align(alignment = CenterHorizontally)
+                .height(45.dp),
         ) {
-            Text(text = "Subir Post de Reseña")
+            Text(text = "Subir Publicacion")
         }
     }
 }
 
-
 @Composable
-fun nuevaCita() {
+fun nuevaCita(
+    viewModel: BookViewModel
+) {
     //DataStore
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -504,7 +647,7 @@ fun nuevaCita() {
                 text = "Escribe el título del libro",
                 fontSize = 16.sp,
             )
-            val inputTituloLibro = remember { mutableStateOf(TextFieldValue()) }
+            /*val inputTituloLibro = remember { mutableStateOf(TextFieldValue()) }
             OutlinedTextField(
                 value = inputTituloLibro.value,
                 onValueChange = { inputTituloLibro.value = it },
@@ -519,7 +662,125 @@ fun nuevaCita() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
+            )*/
+
+            val txtFieldError = remember { mutableStateOf("") }
+            var showDialog by remember { mutableStateOf(false) }
+            val (query, onValueChange) = remember { mutableStateOf("") }
+            val (author, setAuthor) = remember { mutableStateOf("") }
+
+            if(showDialog){
+                if(query == ""){
+                }else{
+                    viewModel.getBooks(query)
+                    MyDialog(onClose= {showDialog=false}, viewModel)
+                }
+            }
+
+            val bookId by viewModel.itemId.collectAsState("")
+            viewModel.getBook(bookId)
+            val book by viewModel.clickedBook.collectAsState(initial = null)
+            if(!showDialog){
+                LaunchedEffect(bookId){
+                    book?.let { it ->
+                        onValueChange(it.volumeInfo.title)
+                        setAuthor(
+                            if (it.volumeInfo.authors != null){
+                                it.volumeInfo.authors.joinToString(",")
+                            } else ("")
+                        )
+                    }
+                }
+                viewModel.resetAll()
+            }
+
+            Row(modifier = Modifier.fillMaxWidth()){
+                TextField(
+                    value = query,
+                    onValueChange = onValueChange,
+                    textStyle = TextStyle(fontSize = 14.sp),
+                    colors = TextFieldDefaults.textFieldColors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        backgroundColor = Color.Transparent,
+                        cursorColor = Color.DarkGray
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth(0.78f)
+                        /*.border(
+                            BorderStroke(
+                                width = 2.dp,
+                                color = colorResource(
+                                    id = if (txtFieldError.value.isEmpty()) android.R.color.holo_green_light
+                                        else android.R.color.holo_red_dark
+                                )
+                            ),
+                            shape = RoundedCornerShape(50)
+                        )*/
+                        .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
+                    keyboardOptions = KeyboardOptions (
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
+                    singleLine = true,
+                    /*keyboardActions = KeyboardActions(onSearch = {
+                        searchBook()
+                    })*/
+                )
+                Button(
+                    onClick = {
+                        if (query.isEmpty()) {
+                            showDialog=false
+                            txtFieldError.value = "Campo obligatorio"
+                            return@Button
+                        }else{
+                            showDialog=true
+                        }
+                        /*onValueChange(query)*/
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = Purple700),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp)
+                        .padding(start = 7.dp),
+                ){
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = "Localized description",
+                        tint = Color.White
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(15.dp))
+            Text(
+                text = "Autor del libro",
+                fontSize = 14.sp
             )
+            TextField(
+                value = author,
+                onValueChange = setAuthor,
+                textStyle = TextStyle(fontSize = 14.sp),
+                colors = TextFieldDefaults.textFieldColors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    backgroundColor = Color.Transparent,
+                    cursorColor = Color.DarkGray
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
+                keyboardOptions = KeyboardOptions (
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                singleLine = true,
+                /*keyboardActions = KeyboardActions(onSearch = {
+                    searchBook()
+                })*/
+            )
+
 
             Text(
                 text = "Subir fotografía desde galeria",
@@ -540,7 +801,6 @@ fun nuevaCita() {
             TomarImagen(onImageCapture = {imagenBitmap = it}, onUriCapture = {imagenUri = it})
             /*Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
-
                 contentDescription = null,
                 Modifier
                     .width(80.dp)
@@ -552,9 +812,8 @@ fun nuevaCita() {
                 text = "Texto en claro (Cita)",
                 fontSize = 16.sp,
             )
-            //val inputTextCita = remember { mutableStateOf(TextFieldValue()) }
+            val inputTextCita = remember { mutableStateOf(TextFieldValue()) }
             OutlinedTextField(
-                //value = inputTextCita.value,
                 value = inputTextCita.value,
                 onValueChange = { inputTextCita.value = it },
                 //label = { Text(text = "Texto en claro (Cita)") },
@@ -590,10 +849,6 @@ fun nuevaCita() {
             ) {
                 Text(text = "Subir Post de Cita")
             }
-
-
-
-
 
             /*val inputNameState = remember { mutableStateOf(TextFieldValue()) }
         TextField(
@@ -802,8 +1057,4 @@ fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit)
             onUriCapture(null)
         }
     }
-
 }
-
-
-
