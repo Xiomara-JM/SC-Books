@@ -303,7 +303,7 @@ fun SignUpForm() {
                                                 )
                                             }
                                         showAlert(context, 4)
-                                        context.startActivity(Intent(context, MainActivity::class.java))
+                                        //context.startActivity(Intent(context, MainActivity::class.java))
                                     } else {
                                         showAlert(context, 2)
                                     }
@@ -402,7 +402,7 @@ fun LoginForm(activity: Activity) {
                                     dataStore.saveTag(tag)
                                 }
                                 showAlert(context, 5)
-                                context.startActivity(Intent(context, MainActivity::class.java))
+                                //context.startActivity(Intent(context, MainActivity::class.java))
                             }
                     } else {
                         showAlert(context, 6)
