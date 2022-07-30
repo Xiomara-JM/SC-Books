@@ -35,7 +35,8 @@ fun NavigationHost(
         composable(Buscador.route) {
             Buscador(
                 ViewModel = ViewModel,
-                searchViewModel = searchViewModel
+                searchViewModel = searchViewModel,
+                navController = navController
             )
         }
 
@@ -63,6 +64,9 @@ fun NavigationHost(
 
         composable("libro_resena_cita") {
             LibroResCita(navController)
+        }
+        composable("VistaLibroDetalle") {
+            VistaLibroDetalle(ViewModel,navController)
         }
 
     }

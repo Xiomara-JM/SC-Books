@@ -208,7 +208,7 @@ fun PopupWindowDialog(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    nuevaResena()
+                    nuevaResena(navController=navController)
                 }
 
             } else {
@@ -219,7 +219,7 @@ fun PopupWindowDialog(navController: NavHostController) {
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    nuevaCita(hiltViewModel())
+                    nuevaCita(hiltViewModel(), navController)
                 }
             }
 
@@ -315,7 +315,10 @@ fun PopupWindowDialog(navController: NavHostController) {
 }
 
 @Composable
-fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel) {
+fun MyDialog(
+    onClose: () -> Unit, viewModel: BookViewModel,
+    navController: NavHostController
+) {
     var readOnly by remember { mutableStateOf(false) }
 
     Dialog(
@@ -359,7 +362,7 @@ fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel) {
                     )
                 }
                 Box(modifier = Modifier.padding(15.dp, 35.dp, 15.dp, 60.dp)) {
-                    DisplayResults(viewModel, readOnly)
+                    DisplayResults(viewModel, readOnly, navController)
                 }
             }
             Box(
@@ -386,10 +389,11 @@ fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel) {
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
-@Preview
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun nuevaResena(
-    viewModel: BookViewModel = hiltViewModel()
+    viewModel: BookViewModel = hiltViewModel(),
+    navController: NavHostController
 ) {
     //DataStore
     val context = LocalContext.current
@@ -435,7 +439,7 @@ fun nuevaResena(
             } else {
                 Log.d("rawrwa", query)
                 viewModel.getBooks(query)
-                MyDialog(onClose = { showDialog = false }, viewModel)
+                MyDialog(onClose = { showDialog = false }, viewModel, navController)
             }
         }
 
@@ -453,7 +457,7 @@ fun nuevaResena(
                     )
                 }
             }
-            /*viewModel.resetAll()*/
+            viewModel.resetAll()
         }
 
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -484,7 +488,7 @@ fun nuevaResena(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done
                 ),
-                keyboardActions = KeyboardActions(onSearch = {
+                keyboardActions = KeyboardActions(onDone = {
                     keyboardController?.hide()
                 }),
                 singleLine = true,
@@ -541,6 +545,9 @@ fun nuevaResena(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Done
             ),
+            keyboardActions = KeyboardActions(onDone = {
+                keyboardController?.hide()
+            }),
             singleLine = true,
             /*keyboardActions = KeyboardActions(onSearch = {
                 searchBook()
@@ -577,24 +584,27 @@ fun nuevaResena(
                 if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty()) {
                     showAlert(context, 1)
                 } else {
-                    dbf.collection("libros").document(query).get()
+                    dbf.collection("libros").document(bookId).get()
                         .addOnCompleteListener {
                             if (it.isSuccessful) {
                                 if (!it.getResult().exists()) {
-                                    dbf.collection("libros").document(query).set(
+                                    dbf.collection("libros").document(bookId).set(
                                         hashMapOf(
-                                            "nombre" to query,
-                                            "info" to "información del libro"
+                                            "nombre" to query.replace('/','-'),
+                                            "info" to "información del libro",
+                                            "book_id" to bookId,
+                                            "imagen" to book?.volumeInfo?.imageLinks?.thumbnail
                                         )
                                     )
                                 }
                                 dbf.collection("resenias").document().set(
                                     hashMapOf(
-                                        "libro" to query,
+                                        "libro" to query.replace('/','-'),
                                         "resenia" to inputTextCita.value.text,
                                         "autor_email" to email,
                                         "autor_username" to username,
-                                        "autor_tag" to tag
+                                        "autor_tag" to tag,
+                                        "book_id" to bookId
                                     )
                                 )
                             }
@@ -621,7 +631,8 @@ fun nuevaResena(
 
 @Composable
 fun nuevaCita(
-    viewModel: BookViewModel
+    viewModel: BookViewModel,
+    navController: NavHostController
 ) {
     //DataStore
     val context = LocalContext.current
@@ -679,7 +690,7 @@ fun nuevaCita(
                 if (query == "") {
                 } else {
                     viewModel.getBooks(query)
-                    MyDialog(onClose = { showDialog = false }, viewModel)
+                    MyDialog(onClose = { showDialog = false }, viewModel, navController)
                 }
             }
 
@@ -882,14 +893,15 @@ fun nuevaCita(
                     if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty() || author.isNullOrEmpty()) {
                         showAlert(context, 1)
                     } else {
-                        dbf.collection("libros").document(query).get()
+                        dbf.collection("libros").document(bookId).get()
                             .addOnCompleteListener {
                                 if (it.isSuccessful) {
                                     if (!it.getResult().exists()) {
-                                        dbf.collection("libros").document(query).set(
+                                        dbf.collection("libros").document(bookId).set(
                                             hashMapOf(
-                                                "nombre" to query,
-                                                "autor" to author
+                                                "nombre" to query.replace('/','-'),
+                                                "autor" to author,
+                                                "book_id" to bookId
                                             )
                                         )
                                     }
@@ -901,20 +913,22 @@ fun nuevaCita(
                                                         .document(inputTextCita.value.text).set(
                                                             hashMapOf(
                                                                 "texto" to inputTextCita.value.text,
-                                                                "libro" to query,
-                                                                "autor" to author
+                                                                "libro" to query.replace('/','-'),
+                                                                "autor" to author,
+                                                                "book_id" to bookId
                                                             )
                                                         )
                                                 }
                                                 dbf.collection("comentarios").document().set(
                                                     hashMapOf(
                                                         "texto" to inputTextCita.value.text,
-                                                        "libro" to query,
+                                                        "libro" to query.replace('/','-'),
                                                         "autor" to author,
                                                         "comentario" to inputComentario.value.text,
                                                         "autor_email" to email,
                                                         "autor_username" to username,
-                                                        "autor_tag" to tag
+                                                        "autor_tag" to tag,
+                                                        "book_id" to bookId
                                                     )
                                                 )
                                             }

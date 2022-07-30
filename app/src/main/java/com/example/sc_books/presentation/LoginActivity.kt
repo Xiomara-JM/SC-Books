@@ -286,10 +286,8 @@ fun SignUpForm() {
                                                 val cantidad = creados.size()
                                                 val tag = (cantidad + 100000).toString()
                                                 scope.launch {
-                                                    dataStore.saveEstadoSesion(true)
-                                                    dataStore.saveNombre(username?:"")
-                                                    dataStore.saveEmail(email?:"")
-                                                    dataStore.saveTag(tag)
+                                                    dataStore.setCredentials(true, username?:"",
+                                                    email?:"",tag)
                                                 }
                                                 dbf.collection("usuarios").document(email?:"").set(
                                                     hashMapOf(
@@ -396,10 +394,8 @@ fun LoginForm(activity: Activity) {
                                 val tag = usuario.result.data?.get("tag").toString()
                                 val username = usuario.result.data?.get("username").toString()
                                 scope.launch {
-                                    dataStore.saveEstadoSesion(true)
-                                    dataStore.saveNombre(username)
-                                    dataStore.saveEmail(email?:"")
-                                    dataStore.saveTag(tag)
+                                    dataStore.setCredentials(true, username?:"",
+                                        email?:"",tag)
                                 }
                                 showAlert(context, 5)
                                 //context.startActivity(Intent(context, MainActivity::class.java))
@@ -452,7 +448,7 @@ fun LoginForm(activity: Activity) {
         )
         Text(text = "Acceder con cuenta de Google", Modifier.padding(start = 10.dp))
     }
-    Text(
+    /*Text(
         text = "... o puede ingresar sin usuario.",
         modifier = Modifier
             .padding(vertical = 5.dp)
@@ -465,7 +461,7 @@ fun LoginForm(activity: Activity) {
         fontSize = 12.sp,
         color = LB50_900,
         textDecoration = TextDecoration.Underline
-    )
+    )*/
 }
 
 @Composable
