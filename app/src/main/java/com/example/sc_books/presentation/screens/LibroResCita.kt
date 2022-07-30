@@ -545,54 +545,7 @@ fun ResenaCard (review: Review, index: Int, navController: NavHostController) {
                             )
                     }
                 }
-                Card (
-                    elevation = 0.dp,
-                    onClick = {
 
-                        navController.navigate("comentarios_posts") {
-                            navController.graph.startDestinationRoute?.let { screen_route ->
-                                popUpTo(screen_route) {
-                                    saveState = true
-                                }
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-
-
-
-                ) {
-
-                    Row {
-                        Icon(
-                            Icons.Filled.MenuBook,
-                            contentDescription = "",
-                            modifier = Modifier.width(28.dp),
-                            tint = Color.Black
-                        )
-                        Text(
-                            text = "Ver Libro",
-                            modifier = Modifier
-                                .padding(vertical = 5.dp)
-
-                            /*.clickable {
-                                navController.navigate("comentarios_posts") {
-                                    navController.graph.startDestinationRoute?.let { screen_route ->
-                                        popUpTo(screen_route) {
-                                            saveState = true
-                                        }
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }*/,
-                            fontSize = 12.sp,
-                            color = LB50_900,
-
-                            )
-                    }
-                }
             }
 
 
