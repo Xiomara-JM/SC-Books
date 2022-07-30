@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 
-@RequiresApi(Build.VERSION_CODES.M)
+
 @Composable
 fun ComentariosPosts(navController: NavHostController) {
     Column(

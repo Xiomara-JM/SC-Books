@@ -18,7 +18,7 @@ import com.example.sc_books.ui.theme.SCBooksTheme
 import com.example.sc_books.viewmodels.BookViewModel
 import com.example.sc_books.viewmodels.SearchViewModel
 
-@RequiresApi(Build.VERSION_CODES.M)
+
 @ExperimentalComposeUiApi
 @Composable
 fun NavigationHost(

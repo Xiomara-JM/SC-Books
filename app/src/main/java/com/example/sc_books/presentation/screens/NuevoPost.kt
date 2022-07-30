@@ -3,6 +3,7 @@ package com.example.sc_books.presentation.screens
 import android.content.Intent
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -37,6 +38,8 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 
@@ -73,14 +76,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.key.Key.Companion.Sleep
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.core.content.FileProvider
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.example.sc_books.datastore.Preferencias
-import com.example.sc_books.presentation.LoginForm
-import com.example.sc_books.presentation.SignUpForm
 import com.example.sc_books.presentation.showAlert
 import com.example.sc_books.ui.theme.*
 
@@ -91,6 +94,8 @@ import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import java.io.File
+
 import java.io.IOException
 
 
@@ -98,7 +103,7 @@ import java.io.IOException
 fun NuevoPost(
     navController: NavHostController,
     navSug: () -> Unit
-){
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -120,10 +125,10 @@ fun NuevoPost(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PopupWindowDialog(navController: NavHostController) {
-    var openDialog = remember { mutableStateOf(true)}
-    var openNuevaResena = remember { mutableStateOf(false)}
-    var openCitaGaleria = remember { mutableStateOf(false)}
-    var openCitaCamara = remember { mutableStateOf(false)}
+    var openDialog = remember { mutableStateOf(true) }
+    var openNuevaResena = remember { mutableStateOf(false) }
+    var openCitaGaleria = remember { mutableStateOf(false) }
+    var openCitaCamara = remember { mutableStateOf(false) }
 
     val tabItems = listOf("Nueva reseña", "Nueva Cita")
     val pagerState = rememberPagerState()
@@ -195,33 +200,31 @@ fun PopupWindowDialog(navController: NavHostController) {
                 .fillMaxSize()
                 .background(Purple200)
         ) { page ->
-            if (page == 0){
-                Column (
+            if (page == 0) {
+                Column(
                     modifier = Modifier
                         //.fillMaxSize()
                         .padding(10.dp),
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     nuevaResena()
                 }
 
-            }
-            else{
-                Column (
+            } else {
+                Column(
                     modifier = Modifier
                         //.fillMaxSize()
                         .padding(10.dp),
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     nuevaCita(hiltViewModel())
                 }
             }
 
         }
     }
-
 
 
     /*Column(
@@ -312,13 +315,13 @@ fun PopupWindowDialog(navController: NavHostController) {
 }
 
 @Composable
-fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel){
+fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel) {
     var readOnly by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(dismissOnClickOutside = false)
-    ){
+    ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
             color = Color.White,
@@ -350,7 +353,7 @@ fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel){
                             .width(30.dp)
                             .height(30.dp)
                             .clickable(onClick = {
-                                viewModel.itemId.value=""
+                                viewModel.itemId.value = ""
                                 onClose()
                             })
                     )
@@ -368,7 +371,8 @@ fun MyDialog(onClose: () -> Unit, viewModel: BookViewModel){
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = Purple700,
-                        contentColor = Color.White),
+                        contentColor = Color.White
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(40.dp)
@@ -426,24 +430,24 @@ fun nuevaResena(
         val (author, setAuthor) = remember { mutableStateOf("") }
         val keyboardController = LocalSoftwareKeyboardController.current
 
-        if(showDialog){
-            if(query == ""){
-            }else{
-                Log.d("rawrwa",query)
+        if (showDialog) {
+            if (query == "") {
+            } else {
+                Log.d("rawrwa", query)
                 viewModel.getBooks(query)
-                MyDialog(onClose= {showDialog=false}, viewModel)
+                MyDialog(onClose = { showDialog = false }, viewModel)
             }
         }
 
         val bookId by viewModel.itemId.collectAsState("")
         viewModel.getBook(bookId)
         val book by viewModel.clickedBook.collectAsState(initial = null)
-        if(!showDialog){
-            LaunchedEffect(bookId){
+        if (!showDialog) {
+            LaunchedEffect(bookId) {
                 book?.let { it ->
                     onValueChange(it.volumeInfo.title)
                     setAuthor(
-                        if (it.volumeInfo.authors != null){
+                        if (it.volumeInfo.authors != null) {
                             it.volumeInfo.authors.joinToString(",")
                         } else ("")
                     )
@@ -452,7 +456,7 @@ fun nuevaResena(
             /*viewModel.resetAll()*/
         }
 
-        Row(modifier = Modifier.fillMaxWidth()){
+        Row(modifier = Modifier.fillMaxWidth()) {
             TextField(
                 value = query,
                 onValueChange = onValueChange,
@@ -476,7 +480,7 @@ fun nuevaResena(
                         shape = RoundedCornerShape(50)
                     )*/
                     .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
-                keyboardOptions = KeyboardOptions (
+                keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done
                 ),
@@ -491,22 +495,23 @@ fun nuevaResena(
             Button(
                 onClick = {
                     if (query.isEmpty()) {
-                        showDialog=false
+                        showDialog = false
                         txtFieldError.value = "Campo obligatorio"
                         return@Button
-                    }else{
-                        showDialog=true
+                    } else {
+                        showDialog = true
                     }
                     /*onValueChange(query)*/
                 },
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = Purple700),
+                    backgroundColor = Purple700
+                ),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp)
                     .padding(start = 7.dp),
-            ){
+            ) {
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = "Localized description",
@@ -532,7 +537,7 @@ fun nuevaResena(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
-            keyboardOptions = KeyboardOptions (
+            keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Done
             ),
@@ -571,12 +576,11 @@ fun nuevaResena(
             onClick = {
                 if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty()) {
                     showAlert(context, 1)
-                }
-                else {
+                } else {
                     dbf.collection("libros").document(query).get()
-                        .addOnCompleteListener{
-                            if (it.isSuccessful){
-                                if (!it.getResult().exists()){
+                        .addOnCompleteListener {
+                            if (it.isSuccessful) {
+                                if (!it.getResult().exists()) {
                                     dbf.collection("libros").document(query).set(
                                         hashMapOf(
                                             "nombre" to query,
@@ -601,7 +605,8 @@ fun nuevaResena(
             },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = Purple700,
-                contentColor = Color.White),
+                contentColor = Color.White
+            ),
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier
                 .padding(top = 9.dp)
@@ -627,15 +632,16 @@ fun nuevaCita(
     val username = dataStore.getNombre.collectAsState(initial = "").value
     val tag = dataStore.getTag.collectAsState(initial = "").value
 
-    var imagenBitmap by rememberSaveable{ mutableStateOf<Bitmap?>(null)}
-    var imagenUri by rememberSaveable{ mutableStateOf<Uri?>(null)}
-    var escaneo by rememberSaveable{mutableStateOf("")}
-    var inputTextCita = remember{ mutableStateOf(TextFieldValue()) }
+    var imagenBitmap by rememberSaveable { mutableStateOf<Bitmap?>(null) }
+    var imagenUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var escaneo by rememberSaveable { mutableStateOf("") }
+    var inputTextCita = remember { mutableStateOf(TextFieldValue()) }
+    val mostrar = remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
-    Column (
+    Column(
         modifier = Modifier.padding(bottom = 30.dp)
-    ){
+    ) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -669,23 +675,23 @@ fun nuevaCita(
             val (query, onValueChange) = remember { mutableStateOf("") }
             val (author, setAuthor) = remember { mutableStateOf("") }
 
-            if(showDialog){
-                if(query == ""){
-                }else{
+            if (showDialog) {
+                if (query == "") {
+                } else {
                     viewModel.getBooks(query)
-                    MyDialog(onClose= {showDialog=false}, viewModel)
+                    MyDialog(onClose = { showDialog = false }, viewModel)
                 }
             }
 
             val bookId by viewModel.itemId.collectAsState("")
             viewModel.getBook(bookId)
             val book by viewModel.clickedBook.collectAsState(initial = null)
-            if(!showDialog){
-                LaunchedEffect(bookId){
+            if (!showDialog) {
+                LaunchedEffect(bookId) {
                     book?.let { it ->
                         onValueChange(it.volumeInfo.title)
                         setAuthor(
-                            if (it.volumeInfo.authors != null){
+                            if (it.volumeInfo.authors != null) {
                                 it.volumeInfo.authors.joinToString(",")
                             } else ("")
                         )
@@ -694,7 +700,7 @@ fun nuevaCita(
                 viewModel.resetAll()
             }
 
-            Row(modifier = Modifier.fillMaxWidth()){
+            Row(modifier = Modifier.fillMaxWidth()) {
                 TextField(
                     value = query,
                     onValueChange = onValueChange,
@@ -718,7 +724,7 @@ fun nuevaCita(
                             shape = RoundedCornerShape(50)
                         )*/
                         .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
-                    keyboardOptions = KeyboardOptions (
+                    keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
                     ),
@@ -730,22 +736,23 @@ fun nuevaCita(
                 Button(
                     onClick = {
                         if (query.isEmpty()) {
-                            showDialog=false
+                            showDialog = false
                             txtFieldError.value = "Campo obligatorio"
                             return@Button
-                        }else{
-                            showDialog=true
+                        } else {
+                            showDialog = true
                         }
                         /*onValueChange(query)*/
                     },
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Purple700),
+                        backgroundColor = Purple700
+                    ),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp)
                         .padding(start = 7.dp),
-                ){
+                ) {
                     Icon(
                         imageVector = Icons.Filled.Search,
                         contentDescription = "Localized description",
@@ -771,7 +778,7 @@ fun nuevaCita(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFFE7F1F1), RoundedCornerShape(10.dp)),
-                keyboardOptions = KeyboardOptions (
+                keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done
                 ),
@@ -783,11 +790,11 @@ fun nuevaCita(
 
 
             Text(
-                text = "Subir fotografía desde galeria",
+                text = "Elija subir desde  galería o hacer una captura.",
                 fontSize = 16.sp,
             )
 
-            OutlinedButton(
+            /*OutlinedButton(
                 onClick = {
 
                     //mContext.startActivity(Intent(mContext, RegisterActivity::class.java))
@@ -797,8 +804,39 @@ fun nuevaCita(
             ) {
 
                 Icon(imageVector = Icons.Default.ImageSearch, contentDescription = null)
+            }*/
+
+            if (mostrar.value) {
+                imagenUri?.let {
+                    if (Build.VERSION.SDK_INT < 28) {
+                        imagenBitmap = MediaStore.Images
+                            .Media.getBitmap(context.contentResolver, it)
+
+                    } else {
+                        val source = ImageDecoder
+                            .createSource(context.contentResolver, it)
+                        imagenBitmap = ImageDecoder.decodeBitmap(source)
+                    }
+
+                    imagenBitmap?.let { btm ->
+                        Image(
+                            bitmap = btm.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier.size(300.dp)
+                        )
+                    }
+                }
             }
-            TomarImagen(onImageCapture = {imagenBitmap = it}, onUriCapture = {imagenUri = it})
+
+
+            /*TomarImagen(
+                onImageCapture = { imagenBitmap = it },
+                onUriCapture = { imagenUri = it })*/
+            mayorCalidad(
+                context = context,
+                onUriCapture = { imagenUri = it },
+                escribir = { inputTextCita.value = it })
+
             /*Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = null,
@@ -807,12 +845,12 @@ fun nuevaCita(
                     .padding(bottom = 32.dp, top = 32.dp),
                 alignment = Alignment.Center,
             )*/
-            EscanearImagen(imagenBitmap,  imagenUri, escribir = {inputTextCita.value = it})
+            //EscanearImagen(imagenUri, escribir = { inputTextCita.value = it })
             Text(
                 text = "Texto en claro (Cita)",
                 fontSize = 16.sp,
             )
-            val inputTextCita = remember { mutableStateOf(TextFieldValue()) }
+            //val inputTextCita = remember { mutableStateOf(TextFieldValue()) }
             OutlinedTextField(
                 value = inputTextCita.value,
                 onValueChange = { inputTextCita.value = it },
@@ -841,7 +879,49 @@ fun nuevaCita(
             )
             Button(
                 onClick = {
-                    Toast.makeText(context, "$email y $username y $tag", Toast.LENGTH_SHORT).show()
+                    if (query.isNullOrEmpty() || inputTextCita.value.text.isNullOrEmpty() || author.isNullOrEmpty()) {
+                        showAlert(context, 1)
+                    } else {
+                        dbf.collection("libros").document(query).get()
+                            .addOnCompleteListener {
+                                if (it.isSuccessful) {
+                                    if (!it.getResult().exists()) {
+                                        dbf.collection("libros").document(query).set(
+                                            hashMapOf(
+                                                "nombre" to query,
+                                                "autor" to author
+                                            )
+                                        )
+                                    }
+                                    dbf.collection("citas").document(inputTextCita.value.text).get()
+                                        .addOnCompleteListener { cita ->
+                                            if (cita.isSuccessful) {
+                                                if (!cita.getResult().exists()) {
+                                                    dbf.collection("citas")
+                                                        .document(inputTextCita.value.text).set(
+                                                            hashMapOf(
+                                                                "texto" to inputTextCita.value.text,
+                                                                "libro" to query,
+                                                                "autor" to author
+                                                            )
+                                                        )
+                                                }
+                                                dbf.collection("comentarios").document().set(
+                                                    hashMapOf(
+                                                        "texto" to inputTextCita.value.text,
+                                                        "libro" to query,
+                                                        "autor" to author,
+                                                        "comentario" to inputComentario.value.text,
+                                                        "autor_email" to email,
+                                                        "autor_username" to username,
+                                                        "autor_tag" to tag
+                                                    )
+                                                )
+                                            }
+                                        }
+                                }
+                            }
+                    }
                 },
                 modifier = Modifier
                     .width(220.dp)
@@ -881,105 +961,45 @@ fun nuevaCita(
 }
 
 @Composable
-fun EscanearImagen(imagenBitmap: Bitmap?, imagenUri: Uri?, escribir: (TextFieldValue) -> Unit) {
-    val context = LocalContext.current
-    //val recognizer = remember(mutableStateOf(TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)))
-    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-
-    imagenBitmap?.let { btm ->
-        val image = InputImage.fromBitmap(btm, 0)
-
-        val result = recognizer.process(image)
-            .addOnSuccessListener { visionText ->
-                escribir(TextFieldValue(visionText.text))
-                //Log.d("Estado", visionText.text)
-                //Toast.makeText(context, "Ya se verificó! ${visionText.text} .", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener { e ->
-                Log.d("Estado", e.message.toString())
-                //Toast.makeText(context, "Aún no!", Toast.LENGTH_SHORT).show()
-            }
-    }
-    imagenUri?.let { uri ->
-        var btm by  remember {
-            mutableStateOf<Bitmap?>(null)
-        }
-        if (Build.VERSION.SDK_INT < 28) {
-            btm = MediaStore.Images
-                .Media.getBitmap(context.contentResolver,uri)
-
-        } else {
-            val source = ImageDecoder
-                .createSource(context.contentResolver,uri)
-            btm = ImageDecoder.decodeBitmap(source)
-        }
-
-        btm?.let {  bitmaImage ->
-            Image(
-                bitmap = bitmaImage.asImageBitmap(),
-                contentDescription =null,
-                modifier = Modifier.size(400.dp)
-            )
-        }
-
-        //val image = InputImage.fromBitmap(btm, 0)
-        val image: InputImage
-        try {
-            image = InputImage.fromFilePath(context, uri)
-            val result = recognizer.process(image)
-                .addOnSuccessListener { visionText ->
-                    escribir(TextFieldValue(visionText.text))
-                    //Log.d("Estado", visionText.text)
-                    //Toast.makeText(context, "Ya se verificó! ${visionText.text} .", Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener { e ->
-                    Log.d("Estado", e.message.toString())
-                    //Toast.makeText(context, "Aún no!", Toast.LENGTH_SHORT).show()
-                }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
-}
-
-
-@Composable
-fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit) {
-
+fun mayorCalidad(
+    context: Context,
+    onUriCapture: (Uri?) -> Unit,
+    escribir: (TextFieldValue) -> Unit
+) {
+    val mCheckedState = remember { mutableStateOf(true) }
+    var inputTextCita = remember { mutableStateOf(TextFieldValue()) }
     var imageUri by remember {
         mutableStateOf<Uri?>(null)
     }
-    val context = LocalContext.current
-    var bitmapDos by  remember {
-        mutableStateOf<Bitmap?>(null)
-    }
 
-    val camaraOn = remember{mutableStateOf(false)}
-    val galleryOn = remember { mutableStateOf(false)}
+    val camaraOn = remember { mutableStateOf(false) }
+    val editable = remember { mutableStateOf(false) }
+    val galleryOn = remember { mutableStateOf(false) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         imageUri = uri
-        bitmapDos = null
     }
 
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { btm: Bitmap? ->
-        imageUri = null
-        bitmapDos = btm
-    }
+    val resultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            if (galleryOn.value){
+            if (galleryOn.value) {
                 galleryLauncher.launch("image/*")
             }
-            if (camaraOn.value){
-                cameraLauncher.launch()
+            if (camaraOn.value) {
+                imageUri = FileProvider.getUriForFile(
+                    context,
+                    context.packageName + ".provider",
+                    File(context.filesDir, "picFromCamera")
+                )
+                resultLauncher.launch(imageUri)
             }
             Toast.makeText(context, "Permiso concedido!", Toast.LENGTH_SHORT).show()
         } else {
@@ -987,23 +1007,30 @@ fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit)
         }
     }
     Row() {
+
+
         Button(onClick = {
             camaraOn.value = true
             galleryOn.value = false
+            mCheckedState.value = false
             when (PackageManager.PERMISSION_GRANTED) {
                 ContextCompat.checkSelfPermission(
                     context, Manifest.permission.CAMERA
                 ) -> {
-                    cameraLauncher.launch()
+                    imageUri = FileProvider.getUriForFile(
+                        context,
+                        context.packageName + ".provider",
+                        File(context.filesDir, "picFromCamera")
+                    )
+                    resultLauncher.launch(imageUri)
                 }
                 else -> {
                     permissionLauncher.launch(Manifest.permission.CAMERA)
                 }
             }
         }) {
-            Text(text = "Camara")
+            Text(text = "Capturar foto")
         }
-
         Button(onClick = {
             camaraOn.value = false
             galleryOn.value = true
@@ -1021,40 +1048,56 @@ fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit)
             Text(text = "Galeria")
         }
     }
+    Row() {
 
-    if (galleryOn.value){
-        imageUri?.let {
-            if (Build.VERSION.SDK_INT < 28) {
-                bitmapDos = MediaStore.Images
-                    .Media.getBitmap(context.contentResolver,it)
-
-            } else {
-                val source = ImageDecoder
-                    .createSource(context.contentResolver,it)
-                bitmapDos = ImageDecoder.decodeBitmap(source)
-            }
-
-            onUriCapture(it)
-            onImageCapture(null)
-            bitmapDos?.let {  btm ->
-                Image(
-                    bitmap = btm.asImageBitmap(),
-                    contentDescription =null,
-                    modifier = Modifier.size(400.dp)
-                )
-            }
+        Button(onClick = {
+            editable.value = true
+            mCheckedState.value = false
+            mCheckedState.value = true
+            mCheckedState.value = false
+        }) {
+            Text(text = "Analizar")
         }
+        if (editable.value) {
+            Text(text = "Editar: ")
+            Switch(checked = mCheckedState.value, onCheckedChange = { mCheckedState.value = it })
+        }
+
     }
 
-    if (camaraOn.value) {
-        bitmapDos?.let { btm ->
-            Image(
-                bitmap = btm.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier.size(400.dp)
-            )
-            onImageCapture(btm)
-            onUriCapture(null)
+    EscanearImagen(imagenUri = imageUri, escribir = { inputTextCita.value = it })
+    if (!mCheckedState.value) {
+        escribir(TextFieldValue(inputTextCita.value.text))
+        //Log.d("hola", inputTextCita.value.text)
+    }
+
+
+}
+
+
+@Composable
+fun EscanearImagen(imagenUri: Uri?, escribir: (TextFieldValue) -> Unit) {
+    val context = LocalContext.current
+    //val recognizer = remember(mutableStateOf(TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)))
+    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+    imagenUri?.let { uri ->
+
+
+        val image: InputImage
+        try {
+            image = InputImage.fromFilePath(context, uri)
+            val result = recognizer.process(image)
+                .addOnSuccessListener { visionText ->
+                    escribir(TextFieldValue(visionText.text))
+                }
+                .addOnFailureListener { e ->
+                    Log.d("Estado", e.message.toString())
+                }
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 }
+
+
