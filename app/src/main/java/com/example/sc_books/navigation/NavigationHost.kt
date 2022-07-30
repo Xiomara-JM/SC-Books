@@ -1,7 +1,5 @@
 package com.example.sc_books.navigation
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -11,12 +9,14 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 
 import com.example.sc_books.navigation.Destinations.*
 import com.example.sc_books.presentation.screens.*
 import com.example.sc_books.ui.theme.SCBooksTheme
 import com.example.sc_books.viewmodels.BookViewModel
 import com.example.sc_books.viewmodels.SearchViewModel
+import com.example.sc_books.presentation.screens.LibroResCita
 
 
 @ExperimentalComposeUiApi
@@ -48,10 +48,10 @@ fun NavigationHost(
         }
 
         composable(MyPosts.route) {
-            MyPosts()
+            MyPosts(navController)
         }
         composable(Favoritos.route) {
-            Favoritos()
+            Favoritos(navController = navController)
         }
 
         composable("comentarios_posts") {
@@ -62,9 +62,19 @@ fun NavigationHost(
             PerfilUsuario(navController)
         }
 
-        composable("libro_resena_cita") {
-            LibroResCita(navController)
+        /*composable("libro_resena_cita") {
+            LibroResCita(newText, navController)
+        }*/
+
+        composable(
+            route = InfoLibro.route,
+            arguments = listOf(navArgument("newText"){defaultValue = "R_m3DgAAQBAJ"})
+        ) { navBackStackEntry->
+            var newText = navBackStackEntry.arguments?.getString("newText")
+            requireNotNull(newText)
+            LibroResCita(newText, navController)
         }
+
         composable("VistaLibroDetalle") {
             VistaLibroDetalle(ViewModel,navController)
         }
