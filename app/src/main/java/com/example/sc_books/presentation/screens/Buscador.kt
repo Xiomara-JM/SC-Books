@@ -3,6 +3,7 @@ package com.example.sc_books.presentation.screens
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -49,6 +50,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.update
 
 
 @ExperimentalComposeUiApi
@@ -57,6 +60,9 @@ fun Buscador(
     ViewModel: BookViewModel,
     searchViewModel: SearchViewModel
 ){
+    val readonly by remember {
+        mutableStateOf(true)
+    }
     Surface(
         color = MaterialTheme.colors.background,
         modifier = Modifier.padding(bottom = 60.dp)
@@ -69,7 +75,7 @@ fun Buscador(
             /*bottomBar = { BottomBar(navHostController) }*/
         ){
             Column(modifier = Modifier.padding(it)) {
-                DisplayResults(ViewModel)
+                DisplayResults(ViewModel, readonly)
             }
         }
     }
@@ -234,7 +240,8 @@ fun SearchView(
 
 @Composable
 fun DisplayResults(
-    ViewModel: BookViewModel
+    ViewModel: BookViewModel,
+    readonly: Boolean
 ) {
     val state = rememberLazyListState()
     val bookList by ViewModel.bookList.collectAsState(initial = null)
@@ -243,10 +250,11 @@ fun DisplayResults(
 
     bookList?.let { bookResults ->
         bookResults.items?.let { items ->
-            LazyColumn(state = state, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                items(items) { item ->
-                    SearchResults(item)
-                }
+            LazyColumn(
+                state = state,
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                items(items) { item -> SearchResults(item, ViewModel, readonly) }
             }
         }
         if ((retroState is RetroState.Success && bookList?.items.isNullOrEmpty()) || isError) {
@@ -267,13 +275,22 @@ fun DisplayResults(
 }
 
 @Composable
-fun SearchResults(item: Item) {
+fun SearchResults(
+    item: Item,
+    ViewModel: BookViewModel,
+    readonly: Boolean
+) {
+    /*val itemId by ViewModel.Itemid.collectAsState(initial = "")*/
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            /* .clickable(onClick = {
-                 navHostController.navigate(route = BookNavScreens.DetailView.withArgs(item.id))
-             })*/
+            .clickable(onClick = {
+                if(readonly){
+                }else{
+                    ViewModel.itemId.value = item.id
+                }
+                /*navHostController.navigate(route = BookNavScreens.DetailView.withArgs(item.id))*/
+            })
             .padding(
                 start = 16.dp,
                 top = 8.dp,
@@ -297,8 +314,12 @@ fun SearchResults(item: Item) {
             val imageLink = item.volumeInfo.imageLinks
             BookImage(
                 imageLink = imageLink,
-                ActualImageModifier = Modifier.size(100.dp).align(alignment = Alignment.CenterVertically),
-                PlaceHolderModifier = Modifier.size(100.dp).align(alignment = Alignment.CenterVertically),
+                ActualImageModifier = Modifier
+                    .size(100.dp)
+                    .align(alignment = Alignment.CenterVertically),
+                PlaceHolderModifier = Modifier
+                    .size(100.dp)
+                    .align(alignment = Alignment.CenterVertically),
             )
             Column(modifier = Modifier.fillMaxWidth(0.7f)) {
                 Text(
