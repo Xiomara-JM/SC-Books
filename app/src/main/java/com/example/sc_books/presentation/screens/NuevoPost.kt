@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
+import androidx.compose.animation.Animatable
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -53,10 +54,6 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.sc_books.presentation.components.QuerySearch
-import com.example.sc_books.ui.theme.LB50_400
-import com.example.sc_books.ui.theme.LB50_900
-import com.example.sc_books.ui.theme.Purple200
-import com.example.sc_books.ui.theme.Purple700
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -68,10 +65,19 @@ import androidx.compose.material.TextField
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import com.example.sc_books.presentation.LoginForm
+import com.example.sc_books.presentation.SignUpForm
+import com.example.sc_books.ui.theme.*
 //import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.sc_books.viewmodels.BookViewModel
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.pagerTabIndicatorOffset
+import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.launch
 
 import java.io.IOException
 
@@ -99,6 +105,7 @@ fun NuevoPost(
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun PopupWindowDialog(navController: NavHostController) {
     var openDialog = remember { mutableStateOf(true)}
@@ -106,7 +113,106 @@ fun PopupWindowDialog(navController: NavHostController) {
     var openCitaGaleria = remember { mutableStateOf(false)}
     var openCitaCamara = remember { mutableStateOf(false)}
 
-    Column(
+    val tabItems = listOf("Nueva reseña", "Nueva Cita")
+    val pagerState = rememberPagerState()
+    val coroutineScope = rememberCoroutineScope()
+
+
+    Column {
+        TabRow(
+            selectedTabIndex = pagerState.currentPage,
+            backgroundColor = Purple500,
+            modifier = Modifier
+                .padding(5.dp)
+                .background(Color.Transparent)
+                .clip(RoundedCornerShape(30.dp)),
+            indicator = { tabPositions ->
+                TabRowDefaults.Indicator(
+                    modifier = Modifier
+                        .pagerTabIndicatorOffset(
+                            pagerState, tabPositions
+                        )
+                        .width(0.dp)
+                        .height(0.dp)
+                )
+            }
+        ) {
+            tabItems.forEachIndexed { index, title ->
+                val color = remember { Animatable(Purple700) }
+                LaunchedEffect(pagerState.currentPage == index) {
+                    color.animateTo(
+                        if (pagerState.currentPage == index)
+                            Color.White else Purple500
+                    )
+                }
+
+                Tab(
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    },
+                    text = {
+                        Text(
+                            text = title,
+                            style = if (pagerState.currentPage == index) {
+                                TextStyle(
+                                    color = Purple700,
+                                    fontSize = 18.sp
+                                )
+                            } else {
+                                TextStyle(
+                                    color = Purple700,
+                                    fontSize = 16.sp
+                                )
+                            }
+                        )
+                    },
+                    modifier = Modifier.background(
+                        color = color.value,
+                        shape = RoundedCornerShape(30.dp)
+                    )
+                )
+            }
+        }
+        HorizontalPager(
+            count = tabItems.size,
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Purple200)
+        ) { page ->
+            if (page == 0){
+                Column (
+                    modifier = Modifier
+                        //.fillMaxSize()
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.SpaceAround,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    nuevaResena()
+                }
+
+            }
+            else{
+                Column (
+                    modifier = Modifier
+                        //.fillMaxSize()
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.SpaceAround,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    nuevaCita()
+                }
+            }
+
+        }
+    }
+
+
+
+    /*Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp),
@@ -187,14 +293,10 @@ fun PopupWindowDialog(navController: NavHostController) {
             }
             if(openCitaGaleria.value)
             {
-                citaGaleria()
-            }
-            if(openCitaCamara.value)
-            {
-                citaCamara()
+                nuevaCita()
             }
         }
-    }
+    }*/
 }
 
 
@@ -332,7 +434,7 @@ fun nuevaResena(
 
 
 @Composable
-fun citaGaleria() {
+fun nuevaCita() {
     var imagenBitmap by rememberSaveable{ mutableStateOf<Bitmap?>(null)}
     var imagenUri by rememberSaveable{ mutableStateOf<Uri?>(null)}
     var escaneo by rememberSaveable{mutableStateOf("")}
@@ -341,7 +443,7 @@ fun citaGaleria() {
     val scrollState = rememberScrollState()
     Column (
         modifier = Modifier.padding(bottom = 30.dp)
-            ){
+    ){
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -536,20 +638,6 @@ fun EscanearImagen(imagenBitmap: Bitmap?, imagenUri: Uri?, escribir: (TextFieldV
     }
 }
 
-@Composable
-fun citaCamara() {
-    //TextRead()
-    /*Column(
-        modifier = Modifier.padding(horizontal = 10.dp)
-    ) {
-        Text(
-            text = "Crear una Nueva Cita desde Cámara",
-            modifier = Modifier
-                .padding(vertical = 5.dp),
-            fontSize = 16.sp
-        )
-    }*/
-}
 
 @Composable
 fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit) {
@@ -611,7 +699,7 @@ fun TomarImagen(onImageCapture: (Bitmap?) -> Unit, onUriCapture: (Uri?) -> Unit)
         }) {
             Text(text = "Camara")
         }
-        
+
         Button(onClick = {
             camaraOn.value = false
             galleryOn.value = true
