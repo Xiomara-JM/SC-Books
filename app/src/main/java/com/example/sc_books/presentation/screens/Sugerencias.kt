@@ -1,5 +1,6 @@
 package com.example.sc_books.presentation.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -119,6 +120,7 @@ fun Sugerencias(navController: NavHostController) {
     var listado = remember { mutableListOf<Resenia>() }
     var mostrar = remember { mutableStateOf(false) }
     var imagen = remember { mutableStateOf("") }
+    var cont = remember { mutableStateOf(0) }
     val fav = remember{ mutableStateOf(false)}
 
     //DataStore
@@ -126,8 +128,7 @@ fun Sugerencias(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val dataStore = Preferencias(context)
     val dbf = FirebaseFirestore.getInstance()
-    val tag2 = dataStore.getTag.collectAsState(initial = "").toString()
-    val tag = remember{ mutableStateOf(tag2)}
+    val tag = dataStore.getTag.collectAsState(initial = "").value
 
 
 
@@ -182,15 +183,15 @@ fun Sugerencias(navController: NavHostController) {
                 )
             }
         }*/
-
+        if (tag!= ""){
         dbf.collection("resenias").limit(25).get()
             .addOnSuccessListener {
-                var cont = 0;
+                //var cont = 0;
                 if (listado.size < it.size()) {
                     for (resen in it) {
 
                         //var imagen: String
-                        dbf.collection("libros").document("book_id").get()
+                        /*dbf.collection("libros").document("book_id").get()
                             .addOnSuccessListener { document ->
                                 if (document != null) {
                                     imagen.value = document.data?.get("imagen").toString()
@@ -199,18 +200,19 @@ fun Sugerencias(navController: NavHostController) {
                                         "https://edit.org/images/cat/portadas-libros-big-2019101610.jpg"
                                 }
 
-                            }
-                        dbf.collection("favoritos").document(tag.value+resen.id).get()
+                            }*/
+                        //var fav: Boolean = false
+                        dbf.collection("favoritos").document(tag+resen.id).get()
                             .addOnCompleteListener{cor->
                                 if (cor.isSuccessful){
-                                    if (cor.getResult().exists()){
-                                        fav.value = true
-                                    }
-                                }
-                            }
+                                    fav.value = cor.getResult().exists()
 
+                                }
+
+                                //Toast.makeText(context,tag+resen.id+" ${fav.value}", Toast.LENGTH_SHORT).show()
+                            }
                         listado.add(
-                            cont, Resenia(
+                            cont.value, Resenia(
                                 resen.data?.get("autor_email").toString(),
                                 resen.data?.get("autor_tag").toString(),
                                 resen.data?.get("autor_username").toString(),
@@ -218,18 +220,29 @@ fun Sugerencias(navController: NavHostController) {
                                 resen.data?.get("resenia").toString(),
                                 resen.data?.get("book_id").toString(),
                                 imagen.value,
-                                fav,
+                                fav.value,
                                 resen.id,
-                                tag.value
+                                tag
                             )
                         )
-                        cont++
+                        listado[cont.value]?.let {
+                            Log.d("holaSi", tag+resen.id+" ${fav.value} $cont")
+                        }
+
+                        cont.value++
+
+
+                        //Log.d("hola", tag+resen.id+" ${fav}")
+
 
 
                     }
+                    mostrar.value = true
                 }
                 mostrar.value = true
+
             }
+        }
         if (mostrar.value){
             LazyColumn(
                 modifier = Modifier
@@ -270,9 +283,8 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val dataStore = Preferencias(context)
     val dbf = FirebaseFirestore.getInstance()
-    val tag2 = dataStore.getTag.collectAsState(initial = "").value
+    val tag = dataStore.getTag.collectAsState(initial = "").value
     val email = dataStore.getEmail.collectAsState(initial = "").value
-    val tag = remember{ mutableStateOf(tag2)}
     val rotationState by animateFloatAsState(
         targetValue = if (expandedState) 90f else 0f
     )
@@ -436,6 +448,13 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                 )
             }
 
+            val corazon = remember{ mutableStateOf(false)}
+            dbf.collection("favoritos").document(review.tag_user+review.id).get()
+                .addOnCompleteListener{
+                    if (it.isSuccessful){
+                        corazon.value = it.getResult().exists()
+                    }
+                }
 
             Row(
                 modifier = Modifier
@@ -456,9 +475,8 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                             modifier = Modifier
                                 .width(28.dp)
                                 .clickable {
-                                    review.favorito.value = !review.favorito.value
-                                    if (review.favorito.value){
-                                        dbf.collection("favoritos").document(review.tag_user+review.id).set(
+                                    if (!corazon.value){
+                                        dbf.collection("favoritos").document(tag+review.id).set(
                                             hashMapOf(
                                                 "favorito" to true
                                             )
@@ -466,10 +484,11 @@ fun PurseCard(review: Resenia, index: Int, navController: NavHostController) {
                                     }
                                     else{
                                         //Toast.makeText(context,email,Toast.LENGTH_SHORT).show()
-                                        dbf.collection("favoritos").document(review.tag_user+review.id).delete()
+                                        dbf.collection("favoritos").document(tag+review.id).delete()
                                     }
+                                    corazon.value = !corazon.value
                                 },
-                            tint = getTextColorFav(review.favorito.value),
+                            tint = getTextColorFav(corazon.value),
 
                             )
                         Text(
@@ -694,7 +713,7 @@ data class Resenia(
     val resenia: String,
     val book_id: String,
     val imagen: String,
-    val favorito: MutableState<Boolean>,
+    val favorito: Boolean,
     val id: String,
     val tag_user: String
 )
